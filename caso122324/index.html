@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Expediente — González/López · Claim 24-279917761</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16202C;
+  --paper:#EDEEE9;
+  --paper-2:#E3E5DF;
+  --rule:#C6C9C1;
+  --slate:#56616F;
+  --oxblood:#94302B;
+  --forest:#2F5D4A;
+  --amber:#9A6B14;
+  --sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --serif:"Spectral",Georgia,"Times New Roman",serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ink:#E4E6E2;
+    --paper:#141A21;
+    --paper-2:#1C242D;
+    --rule:#33404D;
+    --slate:#97A3B0;
+    --oxblood:#D8736B;
+    --forest:#73B79B;
+    --amber:#D2A44C;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#E4E6E2;
+  --paper:#141A21;
+  --paper-2:#1C242D;
+  --rule:#33404D;
+  --slate:#97A3B0;
+  --oxblood:#D8736B;
+  --forest:#73B79B;
+  --amber:#D2A44C;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 1rem);-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.6;
+  font-variant-numeric:tabular-nums;
+}
+.wrap{max-width:60rem;margin:0 auto;padding:0 1.5rem 6rem}
+@media (max-width:640px){.wrap{padding:0 1.1rem 4rem}}
+
+/* language */
+.en{display:none}
+body.lang-en .es{display:none}
+body.lang-en .en{display:inline}
+body.lang-en li.en,body.lang-en p.en,body.lang-en div.en,body.lang-en td.en,body.lang-en th.en{display:block}
+body.lang-en td.en,body.lang-en th.en{display:table-cell}
+
+/* masthead */
+.mast{
+  border-bottom:2px solid var(--ink);
+  padding:2.5rem 0 1.1rem;
+  display:flex;
+  flex-wrap:wrap;
+  gap:1.25rem;
+  align-items:flex-end;
+  justify-content:space-between;
+}
+.mast h1{
+  font-family:var(--serif);
+  font-weight:600;
+  font-size:clamp(1.9rem,5vw,2.9rem);
+  line-height:1.08;
+  margin:0 0 .4rem;
+  letter-spacing:-.012em;
+}
+.docket{font-size:.86rem;color:var(--slate);line-height:1.5}
+.docket b{color:var(--ink);font-weight:500}
+.toggle{display:flex;border:1px solid var(--rule);border-radius:2px;overflow:hidden;flex:none}
+.toggle button{
+  font-family:var(--sans);font-size:.8rem;font-weight:500;
+  background:transparent;color:var(--slate);
+  border:0;padding:.42rem .85rem;cursor:pointer;line-height:1.4;
+}
+.toggle button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.toggle button:focus-visible{outline:2px solid var(--amber);outline-offset:-2px}
+
+section{padding-top:3.2rem}
+h2{
+  font-family:var(--serif);font-weight:600;
+  font-size:clamp(1.3rem,3vw,1.75rem);
+  line-height:1.2;margin:0 0 .35rem;letter-spacing:-.008em;
+}
+.lede{color:var(--slate);margin:0 0 1.6rem;max-width:46rem;font-size:.97rem}
+p{max-width:46rem}
+
+/* model */
+.model{
+  background:var(--paper-2);
+  border:1px solid var(--rule);
+  padding:1.5rem;
+  margin-top:1.2rem;
+}
+@media (max-width:640px){.model{padding:1.1rem;margin-left:-.4rem;margin-right:-.4rem}}
+.bar{
+  display:flex;height:3.4rem;width:100%;
+  border:1px solid var(--ink);position:relative;overflow:hidden;
+}
+.seg{display:flex;align-items:center;justify-content:center;min-width:0;transition:width .18s ease}
+.seg span{
+  font-size:.72rem;font-weight:600;padding:0 .3rem;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.seg-fees{background:var(--slate)}
+.seg-fees span{color:var(--paper)}
+.seg-pc{background:var(--oxblood)}
+.seg-pc span{color:#fff}
+.seg-net{background:var(--forest)}
+.seg-net span{color:#fff}
+.floor{
+  position:absolute;top:-.55rem;bottom:-.55rem;width:2px;background:var(--ink);
+}
+.floor::after{
+  content:"";position:absolute;left:-3px;top:-4px;
+  border-left:4px solid transparent;border-right:4px solid transparent;
+  border-top:5px solid var(--ink);
+}
+.floorlab{
+  font-size:.74rem;color:var(--slate);margin-top:.9rem;
+  display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+}
+.readout{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(8.5rem,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);margin:1.5rem 0 1.3rem;
+}
+.cell{background:var(--paper-2);padding:.85rem .9rem}
+.cell dt{font-size:.78rem;color:var(--slate);margin:0 0 .22rem}
+.cell dd{
+  margin:0;font-family:var(--serif);font-weight:600;
+  font-size:1.5rem;line-height:1.1;letter-spacing:-.01em;
+}
+.cell.net dd.under{color:var(--oxblood)}
+.cell.net dd.over{color:var(--forest)}
+.verdict{font-size:.9rem;margin:0 0 1.2rem;font-weight:500}
+.verdict.under{color:var(--oxblood)}
+.verdict.over{color:var(--forest)}
+label.slab{display:block;font-size:.82rem;color:var(--slate);margin-bottom:.5rem}
+input[type=range]{width:100%;accent-color:var(--oxblood);height:1.6rem}
+input[type=range]:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+.presets{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:1.1rem}
+.presets button{
+  font-family:var(--sans);font-size:.78rem;line-height:1.35;
+  background:transparent;color:var(--ink);
+  border:1px solid var(--rule);border-radius:2px;
+  padding:.4rem .65rem;cursor:pointer;text-align:left;
+}
+.presets button:hover{border-color:var(--ink)}
+.presets button:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+.presets button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* status */
+.status{
+  border-left:3px solid var(--forest);
+  background:var(--paper-2);
+  padding:1.1rem 1.25rem;margin-top:1.2rem;
+}
+.status p{margin:0 0 .6rem}
+.status p:last-child{margin-bottom:0}
+
+/* timeline */
+ol.tl{list-style:none;margin:1rem 0 0;padding:0}
+ol.tl li{
+  display:grid;grid-template-columns:7.5rem 1fr;gap:1.4rem;
+  padding:.85rem 0;border-top:1px solid var(--rule);
+}
+ol.tl li:last-child{border-bottom:1px solid var(--rule)}
+@media (max-width:640px){
+  ol.tl li{grid-template-columns:1fr;gap:.2rem}
+}
+.date{font-size:.82rem;font-weight:600;color:var(--slate);padding-top:.12rem}
+.ev{margin:0;font-size:.95rem;max-width:42rem}
+ol.tl li.mark .date{color:var(--ink)}
+ol.tl li.mark{background:linear-gradient(to right,var(--paper-2),transparent 70%)}
+ol.tl li.mark .ev{font-weight:500}
+
+/* tables */
+.scroll{overflow-x:auto;margin-top:1.2rem;border:1px solid var(--rule)}
+table{border-collapse:collapse;width:100%;min-width:34rem;font-size:.92rem}
+th,td{padding:.6rem .8rem;text-align:right;border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child{text-align:left}
+thead th{
+  background:var(--ink);color:var(--paper);font-weight:500;
+  font-size:.82rem;border-bottom:0;
+}
+tbody tr:last-child td{border-bottom:0}
+tr.total td{font-weight:600;background:var(--paper-2);border-top:2px solid var(--ink)}
+td.flag{color:var(--oxblood);font-weight:500}
+
+/* findings */
+.find{border-top:1px solid var(--rule);padding:1.3rem 0}
+.find:last-of-type{border-bottom:1px solid var(--rule)}
+.find h3{
+  font-family:var(--serif);font-size:1.12rem;font-weight:600;
+  margin:0 0 .4rem;line-height:1.25;
+}
+.find p{margin:0 0 .5rem;font-size:.95rem}
+.find p:last-child{margin-bottom:0}
+.math{
+  font-weight:600;color:var(--oxblood);
+  font-size:.95rem;
+}
+.math.ok{color:var(--forest)}
+
+ul.todo{list-style:none;margin:1.1rem 0 0;padding:0;max-width:46rem}
+ul.todo li{
+  padding:.7rem 0 .7rem 1.6rem;border-top:1px solid var(--rule);
+  position:relative;font-size:.95rem;
+}
+ul.todo li:last-child{border-bottom:1px solid var(--rule)}
+ul.todo li::before{
+  content:"";position:absolute;left:0;top:1.15rem;
+  width:.62rem;height:.62rem;border:1.5px solid var(--slate);
+}
+footer{
+  margin-top:3.5rem;padding-top:1.2rem;border-top:2px solid var(--ink);
+  font-size:.82rem;color:var(--slate);max-width:46rem;
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body class="lang-es">
+<div class="wrap">
+
+<header class="mast">
+  <div>
+    <h1><span class="es">Expediente del caso</span><span class="en">Case file</span></h1>
+    <div class="docket">
+      <span class="es">Familia González / López &nbsp;·&nbsp; Claim <b>24-279917761</b><br>
+      Accidente del 23 de diciembre de 2024 — Englewood, Charlotte County, Florida<br>
+      Kanner &amp; Pintaluga &nbsp;·&nbsp; Perfect Chiropractic &nbsp;·&nbsp; Progressive</span>
+      <span class="en">González / López family &nbsp;·&nbsp; Claim <b>24-279917761</b><br>
+      Accident of December 23, 2024 — Englewood, Charlotte County, Florida<br>
+      Kanner &amp; Pintaluga &nbsp;·&nbsp; Perfect Chiropractic &nbsp;·&nbsp; Progressive</span>
+    </div>
+  </div>
+  <div class="toggle" role="group" aria-label="Idioma / Language">
+    <button id="b-es" aria-pressed="true">Español</button>
+    <button id="b-en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section>
+  <h2><span class="es">Cómo se reparten los $50,000</span><span class="en">How the $50,000 is divided</span></h2>
+  <p class="lede">
+    <span class="es">El acuerdo bruto es fijo. Los honorarios legales son el 40%. Todo lo que se pague a Perfect Chiropractic sale de lo que queda. Mueva el control para ver dónde cae el neto de la familia frente al piso de $11,000 garantizado por escrito el 17 de julio de 2026.</span>
+    <span class="en">The gross settlement is fixed. Attorney's fees are 40%. Everything paid to Perfect Chiropractic comes out of what remains. Move the control to see where the family's net falls against the $11,000 floor guaranteed in writing on July 17, 2026.</span>
+  </p>
+
+  <div class="model">
+    <div class="bar" id="bar">
+      <div class="seg seg-fees" id="s-fees"><span id="t-fees"></span></div>
+      <div class="seg seg-pc" id="s-pc"><span id="t-pc"></span></div>
+      <div class="seg seg-net" id="s-net"><span id="t-net"></span></div>
+      <div class="floor" id="floor" title="$11,000"></div>
+    </div>
+    <div class="floorlab">
+      <span class="es">▲ Piso garantizado: neto de $11,000</span>
+      <span class="en">▲ Guaranteed floor: $11,000 net</span>
+      <span>$50,000</span>
+    </div>
+
+    <dl class="readout">
+      <div class="cell"><dt><span class="es">Honorarios (40%)</span><span class="en">Fees (40%)</span></dt><dd>$20,000</dd></div>
+      <div class="cell"><dt><span class="es">A Perfect Chiropractic</span><span class="en">To Perfect Chiropractic</span></dt><dd id="o-pc"></dd></div>
+      <div class="cell net"><dt><span class="es">Neto para la familia</span><span class="en">Net to the family</span></dt><dd id="o-net"></dd></div>
+    </dl>
+
+    <p class="verdict" id="verdict"></p>
+
+    <label class="slab" for="sl">
+      <span class="es">Pago a Perfect Chiropractic</span><span class="en">Payment to Perfect Chiropractic</span>
+    </label>
+    <input type="range" id="sl" min="0" max="28224" step="1" value="21836" aria-label="Pago a Perfect Chiropractic">
+
+    <div class="presets" id="presets"></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="es">Dónde está el caso hoy</span><span class="en">Where the case stands today</span></h2>
+  <p class="lede">
+    <span class="es">Al 1 de octubre de 2026.</span><span class="en">As of October 1, 2026.</span>
+  </p>
+  <div class="status">
+    <p><span class="es">Perfect Chiropractic dejó de exigir el pago desde el acuerdo y está facturando al <b>MedPay</b> de la póliza de Progressive — cobertura de $10,000 por persona, separada de los $50,000 del acuerdo. Kanner &amp; Pintaluga confirmó que el claim puede reabrirse y que la aseguradora <b>no perseguirá subrogación</b> en este caso.</span>
+    <span class="en">Perfect Chiropractic has stopped demanding payment from the settlement and is billing the Progressive policy's <b>MedPay</b> — $10,000 per person in coverage, separate from the $50,000 settlement. Kanner &amp; Pintaluga confirmed the claim can be reopened and that the carrier <b>will not pursue subrogation</b> in this case.</span></p>
+    <p><span class="es">Con $39,414 aproximadamente disponibles en MedPay frente a $25,690 de facturas, el bufete estima que el saldo se cubrirá en su totalidad. Lo que MedPay pague no sale del acuerdo. Cierre estimado: aproximadamente un mes.</span>
+    <span class="en">With roughly $39,414 in available MedPay against $25,690 in billing, the firm estimates the balance will be covered in full. Whatever MedPay pays does not come out of the settlement. Estimated close: about one month.</span></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="es">Cronología</span><span class="en">Chronology</span></h2>
+  <p class="lede">
+    <span class="es">Las entradas destacadas son los puntos donde cambió la posición de alguna de las partes.</span>
+    <span class="en">Highlighted entries are the points where one party's position shifted.</span>
+  </p>
+  <ol class="tl">
+    <li class="mark">
+      <div class="date">23 · 12 · 2024</div>
+      <p class="ev"><span class="es">Accidente en S McCall Rd y Winchester Blvd, Englewood, Florida. La familia González/López es la parte lesionada. Responsables: Steven Lee Kaplan y Joann Milici Kaplan.</span>
+      <span class="en">Accident at S McCall Rd and Winchester Blvd, Englewood, Florida. The González/López family is the injured party. At fault: Steven Lee Kaplan and Joann Milici Kaplan.</span></p>
+    </li>
+    <li>
+      <div class="date">24 · 12 · 2024</div>
+      <p class="ev"><span class="es">Rayos X preventivos para Lucas en Florida. <b>$585.32 pagados por MedPay</b> bajo este claim — prueba de que la cobertura estaba activa.</span>
+      <span class="en">Precautionary X-rays for Lucas in Florida. <b>$585.32 paid by MedPay</b> under this claim — evidence the coverage was active.</span></p>
+    </li>
+    <li>
+      <div class="date">28 · 01 · 2025</div>
+      <p class="ev"><span class="es">Luis firma el Doctor's Lien de Perfect Chiropractic. Autoriza el cobro desde el acuerdo. No fija montos ni menciona intereses.</span>
+      <span class="en">Luis signs Perfect Chiropractic's Doctor's Lien. It authorizes payment from the settlement. It sets no amounts and mentions no interest.</span></p>
+    </li>
+    <li class="mark">
+      <div class="date">05 · 02 · 2025</div>
+      <p class="ev"><span class="es">Luis firma el formulario de costos de Perfect Chiropractic: <b>«el costo no excederá $150.00 por visita»</b>, con rango cotizado de $45–$100 y un total de 22 visitas. Tampoco menciona intereses.</span>
+      <span class="en">Luis signs Perfect Chiropractic's cost estimate form: <b>"your cost will not exceed $150.00 per visit,"</b> with a quoted range of $45–$100 and a total of 22 visits. It mentions no interest either.</span></p>
+    </li>
+    <li>
+      <div class="date">26 · 02 · 2025</div>
+      <p class="ev"><span class="es">Según Perfect Chiropractic, Kanner &amp; Pintaluga les entrega verificación escrita de un MedPay de $10,000 por paciente. Más de un año después, el bufete se retracta. La declaration page confirma que el MedPay sí existía.</span>
+      <span class="en">Per Perfect Chiropractic, Kanner &amp; Pintaluga provides written verification of $10,000 MedPay per patient. More than a year later the firm retracts it. The declarations page confirms MedPay did exist.</span></p>
+    </li>
+    <li>
+      <div class="date"><span class="es">ene–may 2025</span><span class="en">Jan–May 2025</span></div>
+      <p class="ev"><span class="es">Tratamiento quiropráctico. 22 sesiones para Luis y 22 para Rosibel; las de Luis están confirmadas por el calendario de visitas del propio proveedor. Los menores asistieron a menos sesiones; el conteo exacto debe verificarse contra los calendarios de Perfect Chiropractic.</span>
+      <span class="en">Chiropractic treatment. 22 sessions for Luis and 22 for Rosibel; Luis's are confirmed by the provider's own visit calendar. The minors attended fewer sessions; the exact counts should be verified against Perfect Chiropractic's calendars.</span></p>
+    </li>
+    <li>
+      <div class="date">27 · 03 · 2025</div>
+      <p class="ev"><span class="es">Perfect Chiropractic emite las facturas detalladas: $25,690 en total, sin intereses.</span>
+      <span class="en">Perfect Chiropractic issues its itemized invoices: $25,690 total, no interest.</span></p>
+    </li>
+    <li class="mark">
+      <div class="date">17 · 07 · 2026</div>
+      <p class="ev"><span class="es">Kanner &amp; Pintaluga confirma por escrito una oferta global de al menos $43,500 y un neto para Luis de <b>«no menos de $11,000»</b> tras honorarios, costos y reducción de facturas médicas. El término «mínimo» aparece dos veces.</span>
+      <span class="en">Kanner &amp; Pintaluga confirms in writing a global offer of at least $43,500 and a net to Luis of <b>"no less than $11,000"</b> after fees, costs and medical bill reductions. The word "minimum" appears twice.</span></p>
+    </li>
+    <li>
+      <div class="date">21–22 · 07 · 2026</div>
+      <p class="ev"><span class="es">María Arrieta confirma por escrito a Perfect Chiropractic que los casos se resolvieron oficialmente.</span>
+      <span class="en">María Arrieta confirms in writing to Perfect Chiropractic that the cases officially settled.</span></p>
+    </li>
+    <li class="mark">
+      <div class="date">03 · 08 · 2026</div>
+      <p class="ev"><span class="es">Luis firma los cuatro releases — $50,000 en total — y los devuelve al bufete, confiando en la garantía del 17 de julio.</span>
+      <span class="en">Luis signs all four releases — $50,000 total — and returns them to the firm, relying on the July 17 guarantee.</span></p>
+    </li>
+    <li>
+      <div class="date">05 · 08 · 2026</div>
+      <p class="ev"><span class="es">María Arrieta confirma por correo el recibo de los documentos firmados. Desde esta fecha, el desembolso y las reducciones dependen del bufete.</span>
+      <span class="en">María Arrieta confirms receipt of the signed documents by email. From this date, disbursement and reductions rest with the firm.</span></p>
+    </li>
+    <li>
+      <div class="date"><span class="es">jul–sep 2026</span><span class="en">Jul–Sep 2026</span></div>
+      <p class="ev"><span class="es">Perfect Chiropractic registra seis intentos de contacto con el bufete sin respuesta: 29 y 31 de julio, 11, 20 y 31 de agosto, 8 de septiembre.</span>
+      <span class="en">Perfect Chiropractic logs six contact attempts with the firm and no response: July 29 and 31, August 11, 20 and 31, September 8.</span></p>
+    </li>
+    <li class="mark">
+      <div class="date">14 · 09 · 2026</div>
+      <p class="ev"><span class="es">Perfect Chiropractic envía cuatro cobros directos a la familia, uno por cada miembro incluidos los dos menores: <b>$28,224.40</b>, plazo de cuatro días hábiles, amenaza de colecciones y reporte a burós de crédito.</span>
+      <span class="en">Perfect Chiropractic sends four direct demands to the family, one per member including both minors: <b>$28,224.40</b>, a four-business-day deadline, and threats of collections and credit bureau reporting.</span></p>
+    </li>
+    <li>
+      <div class="date">18 · 09 · 2026</div>
+      <p class="ev"><span class="es">Andrea Martin asume como especialista de reducciones, obtiene prórroga al 21 de septiembre y pide ser el punto de contacto directo para que el proveedor deje de escribir a la familia.</span>
+      <span class="en">Andrea Martin takes over as reductions specialist, obtains an extension to September 21, and asks to be the direct point of contact so the provider stops writing to the family.</span></p>
+    </li>
+    <li>
+      <div class="date">21 · 09 · 2026</div>
+      <p class="ev"><span class="es">El bufete ofrece <b>$12,500</b> por el total de las cuatro cuentas.</span>
+      <span class="en">The firm offers <b>$12,500</b> for all four accounts combined.</span></p>
+    </li>
+    <li>
+      <div class="date">23 · 09 · 2026</div>
+      <p class="ev"><span class="es">Perfect Chiropractic rechaza y contraoferta <b>$21,836.50</b>: 15% de reducción sobre el principal y renuncia a los $2,534.40 de intereses.</span>
+      <span class="en">Perfect Chiropractic rejects and counters with <b>$21,836.50</b>: a 15% principal reduction and a waiver of the $2,534.40 in interest.</span></p>
+    </li>
+    <li class="mark">
+      <div class="date">24 · 09 · 2026</div>
+      <p class="ev"><span class="es">Jordan Bachenheimer interviene directamente. Revisa los cuatro expedientes y encuentra que <b>solo existe el lien firmado por Luis</b>. Pide a Perfect Chiropractic los acuerdos firmados de Rosibel, Lucía y Lucas, la cláusula que autoriza los intereses y la fecha desde la cual corren. Plantea reabrir el UM con deposición sobre prácticas de facturación, o presentar una Motion for Equitable Distribution ante el juez.</span>
+      <span class="en">Jordan Bachenheimer steps in directly. He reviews all four files and finds that <b>only Luis's signed lien exists</b>. He asks Perfect Chiropractic for the signed agreements of Rosibel, Lucía and Lucas, the clause authorizing interest, and the date it began accruing. He raises reopening the UM claim with a deposition on billing practices, or filing a Motion for Equitable Distribution with the court.</span></p>
+    </li>
+    <li>
+      <div class="date">25 · 09 · 2026</div>
+      <p class="ev"><span class="es">Seguimiento de Jordan. Perfect Chiropractic no responde a la petición de documentos y deja vencer su propio plazo en silencio.</span>
+      <span class="en">Jordan follows up. Perfect Chiropractic does not respond to the document request and lets its own deadline pass in silence.</span></p>
+    </li>
+    <li class="mark">
+      <div class="date">30 · 09 · 2026</div>
+      <p class="ev"><span class="es">Perfect Chiropractic cambia de vía: facturará al MedPay en lugar de exigir el pago desde el acuerdo.</span>
+      <span class="en">Perfect Chiropractic changes course: it will bill MedPay instead of demanding payment from the settlement.</span></p>
+    </li>
+    <li class="mark">
+      <div class="date">01 · 10 · 2026</div>
+      <p class="ev"><span class="es">El bufete confirma que el claim puede reabrirse, que no se perseguirá subrogación y que el saldo probablemente se cubra en su totalidad. Cierre estimado: aproximadamente un mes.</span>
+      <span class="en">The firm confirms the claim can be reopened, that subrogation will not be pursued, and that the balance will likely be covered in full. Estimated close: about one month.</span></p>
+    </li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="es">Las facturas</span><span class="en">The billing</span></h2>
+  <p class="lede">
+    <span class="es">Lo que Perfect Chiropractic reclamó en sus cobros del 14 de septiembre de 2026.</span>
+    <span class="en">What Perfect Chiropractic demanded in its September 14, 2026 notices.</span>
+  </p>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th><span class="es">Paciente</span><span class="en">Patient</span></th>
+          <th><span class="es">Principal</span><span class="en">Principal</span></th>
+          <th><span class="es">Intereses 1.9%/mes</span><span class="en">Interest 1.9%/mo</span></th>
+          <th><span class="es">Total exigido</span><span class="en">Total demanded</span></th>
+          <th><span class="es">Lien firmado</span><span class="en">Signed lien</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Luis</td><td>$8,670.00</td><td>$855.31</td><td>$9,525.31</td><td><span class="es">Sí</span><span class="en">Yes</span></td></tr>
+        <tr><td>Rosibel</td><td>$6,655.00</td><td>$656.54</td><td>$7,311.54</td><td class="flag"><span class="es">No consta</span><span class="en">Not on file</span></td></tr>
+        <tr><td>Lucía <span class="es">(menor)</span><span class="en">(minor)</span></td><td>$5,430.00</td><td>$535.70</td><td>$5,965.70</td><td class="flag"><span class="es">No consta</span><span class="en">Not on file</span></td></tr>
+        <tr><td>Lucas <span class="es">(menor)</span><span class="en">(minor)</span></td><td>$4,935.00</td><td>$486.85</td><td>$5,421.85</td><td class="flag"><span class="es">No consta</span><span class="en">Not on file</span></td></tr>
+        <tr class="total"><td>Total</td><td>$25,690.00</td><td>$2,534.40</td><td>$28,224.40</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="lede" style="margin-top:2rem">
+    <span class="es">Los cuatro releases firmados el 3 de agosto de 2026.</span>
+    <span class="en">The four releases signed on August 3, 2026.</span>
+  </p>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th><span class="es">Release</span><span class="en">Release</span></th>
+          <th><span class="es">Cubre</span><span class="en">Covers</span></th>
+          <th><span class="es">Monto</span><span class="en">Amount</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Luis &amp; Rosibel</td><td><span class="es">Lesión de Luis; reserva la de Rosibel</span><span class="en">Luis's injury; reserves Rosibel's</span></td><td>$15,000</td></tr>
+        <tr><td>Rosibel &amp; Luis</td><td><span class="es">Lesión de Rosibel; reserva la de Luis</span><span class="en">Rosibel's injury; reserves Luis's</span></td><td>$17,000</td></tr>
+        <tr><td>Lucía</td><td><span class="es">Menor, firmado por los padres</span><span class="en">Minor, signed by the parents</span></td><td>$9,000</td></tr>
+        <tr><td>Lucas</td><td><span class="es">Menor, firmado por los padres</span><span class="en">Minor, signed by the parents</span></td><td>$9,000</td></tr>
+        <tr class="total"><td>Total</td><td></td><td>$50,000</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="es">Hallazgos documentales</span><span class="en">Documentary findings</span></h2>
+  <p class="lede">
+    <span class="es">Cuatro puntos que surgen de los documentos firmados y de la propia póliza.</span>
+    <span class="en">Four points that emerge from the signed documents and the policy itself.</span>
+  </p>
+
+  <div class="find">
+    <h3><span class="es">La facturación supera el tope del propio contrato</span><span class="en">The billing exceeds the contract's own cap</span></h3>
+    <p><span class="es">El formulario de costos firmado el 5 de febrero de 2025 establece que el costo no excederá $150.00 por visita, con un rango cotizado de $45 a $100. El calendario de visitas del propio proveedor confirma 22 sesiones para Luis.</span>
+    <span class="en">The cost form signed February 5, 2025 states that the cost will not exceed $150.00 per visit, with a quoted range of $45 to $100. The provider's own visit calendar confirms 22 sessions for Luis.</span></p>
+    <p class="math"><span class="es">22 visitas × $150 = $3,300 de tope &nbsp;·&nbsp; facturado: $8,670 &nbsp;·&nbsp; equivale a ≈ $394 por visita</span>
+    <span class="en">22 visits × $150 = $3,300 cap &nbsp;·&nbsp; billed: $8,670 &nbsp;·&nbsp; works out to ≈ $394 per visit</span></p>
+    <p><span class="es">Rosibel asistió también a 22 sesiones; los menores, a menos. Si el mismo formulario estándar aplica a los cuatro pacientes, conviene comparar cada tope contra el conteo real de visitas que figura en los calendarios del proveedor.</span>
+    <span class="en">Rosibel also attended 22 sessions; the minors attended fewer. If the same standard form applies to all four patients, each cap is worth comparing against the actual visit count shown in the provider's calendars.</span></p>
+  </div>
+
+  <div class="find">
+    <h3><span class="es">Faltan tres de los cuatro liens</span><span class="en">Three of the four liens are missing</span></h3>
+    <p><span class="es">Tras revisar los expedientes, el bufete solo encontró el lien firmado por Luis. No constan los de Rosibel, Lucía ni Lucas. El lien es el instrumento que da derecho a cobrar desde los fondos del acuerdo.</span>
+    <span class="en">After reviewing the files, the firm found only the lien signed by Luis. None are on file for Rosibel, Lucía or Lucas. The lien is the instrument granting the right to be paid from settlement funds.</span></p>
+    <p class="math"><span class="es">$8,670 respaldados por lien — el 34% &nbsp;·&nbsp; $17,020 sin instrumento firmado</span>
+    <span class="en">$8,670 backed by a lien — 34% &nbsp;·&nbsp; $17,020 with no signed instrument</span></p>
+  </div>
+
+  <div class="find">
+    <h3><span class="es">Ningún documento autoriza los intereses</span><span class="en">No document authorizes the interest</span></h3>
+    <p><span class="es">Ni el Doctor's Lien del 28 de enero ni el formulario de costos del 5 de febrero mencionan tasa de interés, cargos de financiamiento ni fecha de vencimiento del saldo. Perfect Chiropractic ya ofreció renunciar a los $2,534.40 como parte de su contraoferta.</span>
+    <span class="en">Neither the January 28 Doctor's Lien nor the February 5 cost form mentions an interest rate, financing charges, or a date the balance becomes due. Perfect Chiropractic has already offered to waive the $2,534.40 as part of its counteroffer.</span></p>
+  </div>
+
+  <div class="find">
+    <h3><span class="es">El MedPay existía y estaba activo</span><span class="en">MedPay existed and was active</span></h3>
+    <p><span class="es">La póliza de Progressive (Mountain Laurel Assurance, form 9611D TN 12/15) incluye Medical Payments por $10,000 por persona. El pago de $585.32 por los rayos X de Lucas demuestra que la cobertura operó bajo este claim. La cobertura alcanza gastos recibidos dentro de los tres años del accidente, plazo que el tratamiento cumple.</span>
+    <span class="en">The Progressive policy (Mountain Laurel Assurance, form 9611D TN 12/15) includes Medical Payments of $10,000 per person. The $585.32 paid for Lucas's X-rays shows the coverage operated under this claim. It reaches expenses incurred within three years of the accident, a window the treatment falls inside.</span></p>
+    <p class="math ok"><span class="es">4 × $10,000 − $585.32 ≈ $39,414 disponibles &nbsp;·&nbsp; facturas: $25,690</span>
+    <span class="en">4 × $10,000 − $585.32 ≈ $39,414 available &nbsp;·&nbsp; billing: $25,690</span></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="es">Pendientes</span><span class="en">Open items</span></h2>
+  <ul class="todo">
+    <li><span class="es">Confirmar con Progressive que las facturas de Perfect Chiropractic fueron recibidas y cuánto cubre MedPay de cada cuenta.</span>
+    <span class="en">Confirm with Progressive that Perfect Chiropractic's bills were received and how much MedPay covers on each account.</span></li>
+    <li><span class="es">Revisar el estado de cuenta final línea por línea, con el desglose por persona, antes de firmarlo.</span>
+    <span class="en">Review the final closing statement line by line, with a per-person breakdown, before signing it.</span></li>
+    <li><span class="es">Obtener copia de la carta de reducción firmada por Perfect Chiropractic, que deje la cuenta saldada de forma total y definitiva — capital e intereses.</span>
+    <span class="en">Obtain a copy of the reduction letter signed by Perfect Chiropractic, settling the account in full and final — principal and interest.</span></li>
+    <li><span class="es">Verificar que el neto final no quede por debajo de los $11,000 garantizados por escrito el 17 de julio de 2026.</span>
+    <span class="en">Verify the final net does not fall below the $11,000 guaranteed in writing on July 17, 2026.</span></li>
+    <li><span class="es">Mantener toda la correspondencia con Perfect Chiropractic canalizada a través del bufete.</span>
+    <span class="en">Keep all correspondence with Perfect Chiropractic channeled through the firm.</span></li>
+  </ul>
+</section>
+
+<footer>
+  <span class="es">Registro personal de fechas y montos preparado por el cliente para su propio archivo y para la comunicación con sus abogados. No constituye asesoría legal. Actualizado el 1 de octubre de 2026.</span>
+  <span class="en">Personal record of dates and amounts prepared by the client for his own file and for communication with his attorneys. Not legal advice. Updated October 1, 2026.</span>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var POT=50000, FEES=20000, FLOOR=11000;
+  var sl=document.getElementById('sl');
+  var oPC=document.getElementById('o-pc'), oNet=document.getElementById('o-net');
+  var sFees=document.getElementById('s-fees'), sPC=document.getElementById('s-pc'), sNet=document.getElementById('s-net');
+  var tFees=document.getElementById('t-fees'), tPC=document.getElementById('t-pc'), tNet=document.getElementById('t-net');
+  var floor=document.getElementById('floor');
+  var verdict=document.getElementById('verdict');
+  var netCell=oNet.parentNode;
+
+  function money(n){
+    return '$'+Math.round(n).toLocaleString('en-US');
+  }
+  function lang(){ return document.body.classList.contains('lang-en') ? 'en' : 'es'; }
+
+  var PRESETS=[
+    {v:28224, es:'Sin reducción, con intereses · $28,224', en:'No reduction, with interest · $28,224'},
+    {v:25690, es:'Principal completo · $25,690', en:'Full principal · $25,690'},
+    {v:21836, es:'Oferta de PC del 23 sep · $21,837', en:'PC offer, Sep 23 · $21,837'},
+    {v:19000, es:'Límite para el piso de $11,000', en:'Limit for the $11,000 floor'},
+    {v:12500, es:'Oferta del bufete del 21 sep · $12,500', en:'Firm offer, Sep 21 · $12,500'},
+    {v:0, es:'MedPay cubre todo · $0', en:'MedPay covers all · $0'}
+  ];
+
+  var box=document.getElementById('presets');
+  PRESETS.forEach(function(p){
+    var b=document.createElement('button');
+    b.type='button';
+    b.dataset.v=p.v;
+    b.innerHTML='<span class="es">'+p.es+'</span><span class="en">'+p.en+'</span>';
+    b.setAttribute('aria-pressed','false');
+    b.addEventListener('click',function(){ sl.value=p.v; render(); });
+    box.appendChild(b);
+  });
+
+  function render(){
+    var pc=parseInt(sl.value,10);
+    var net=POT-FEES-pc;
+    if(net<0) net=0;
+
+    oPC.textContent=money(pc);
+    oNet.textContent=money(net);
+
+    sFees.style.width=(FEES/POT*100)+'%';
+    sPC.style.width=(pc/POT*100)+'%';
+    sNet.style.width=(net/POT*100)+'%';
+    floor.style.left=((POT-FLOOR)/POT*100)+'%';
+
+    var L=lang();
+    tFees.textContent=(FEES/POT>0.12)?(L==='en'?'Fees':'Honorarios'):'';
+    tPC.textContent=(pc/POT>0.14)?'PC':'';
+    tNet.textContent=(net/POT>0.13)?(L==='en'?'Net':'Neto'):'';
+
+    var under=net<FLOOR;
+    oNet.className=under?'under':'over';
+    netCell.className='cell net';
+    verdict.className='verdict '+(under?'under':'over');
+
+    var gap=Math.abs(FLOOR-net);
+    if(under){
+      verdict.textContent=(L==='en')
+        ? 'Below the guaranteed floor by '+money(gap)+'.'
+        : 'Por debajo del piso garantizado en '+money(gap)+'.';
+    }else{
+      verdict.textContent=(L==='en')
+        ? 'Above the guaranteed floor by '+money(gap)+'.'
+        : 'Por encima del piso garantizado en '+money(gap)+'.';
+    }
+
+    Array.prototype.forEach.call(box.children,function(b){
+      b.setAttribute('aria-pressed', (parseInt(b.dataset.v,10)===pc)?'true':'false');
+    });
+  }
+
+  sl.addEventListener('input',render);
+
+  var bes=document.getElementById('b-es'), ben=document.getElementById('b-en');
+  function setLang(l){
+    document.body.classList.toggle('lang-en', l==='en');
+    document.documentElement.lang = (l==='en')?'en':'es';
+    bes.setAttribute('aria-pressed', l==='es'?'true':'false');
+    ben.setAttribute('aria-pressed', l==='en'?'true':'false');
+    try{ localStorage.setItem('caseLang', l); }catch(e){}
+    render();
+  }
+  bes.addEventListener('click',function(){ setLang('es'); });
+  ben.addEventListener('click',function(){ setLang('en'); });
+
+  var saved=null;
+  try{ saved=localStorage.getItem('caseLang'); }catch(e){}
+  setLang(saved==='en'?'en':'es');
+})();
+</script>
+</body>
+</html>
