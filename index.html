@@ -1,0 +1,2843 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phynity</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0e1a; --surface: #111827; --surface2: #1a2235;
+  --border: rgba(99,179,237,0.15); --accent: #63b3ed;
+  --accent2: #68d391; --accent3: #f6ad55;
+  --text: #e2e8f0; --muted: #718096;
+  --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; overflow: hidden; }
+.app { display: flex; flex-direction: column; height: 100vh; }
+
+/* AUTH */
+#auth-screen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; padding: 1rem; }
+.auth-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem 2.5rem; width: 460px; max-width: 100%; }
+.auth-logo { font-family: var(--sans); font-size: 22px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.auth-logo span { color: var(--accent2); }
+.auth-sub { font-size: 13px; color: var(--muted); margin-bottom: 1.5rem; }
+.auth-tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; background: var(--surface2); border-radius: 8px; padding: 4px; }
+.auth-tab { flex: 1; background: none; border: none; color: var(--muted); font-family: var(--sans); font-size: 13px; padding: 7px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+.auth-tab.active { background: var(--surface); color: var(--accent); }
+.auth-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+.auth-grid .auth-field-full { grid-column: 1 / -1; }
+.auth-field { margin-bottom: 1rem; }
+.auth-label { font-size: 11px; color: var(--muted); margin-bottom: 5px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+.auth-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 10px 14px; outline: none; transition: border-color 0.15s; }
+.auth-input:focus { border-color: var(--accent); }
+.auth-select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 10px 14px; outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23718096' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+.auth-select:focus { border-color: var(--accent); }
+.auth-select option { background: var(--surface2); color: var(--text); }
+.avatar-upload { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+.avatar-preview { width: 64px; height: 64px; border-radius: 50%; background: var(--surface2); border: 2px dashed var(--border); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--accent); overflow: hidden; flex-shrink: 0; cursor: pointer; transition: border-color 0.15s; }
+.avatar-preview:hover { border-color: var(--accent); }
+.avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-upload-btn { display: inline-block; font-size: 11px; color: var(--accent); border: 1px solid rgba(99,179,237,0.3); border-radius: 6px; padding: 4px 10px; cursor: pointer; margin-top: 4px; transition: all 0.15s; }
+.avatar-upload-btn:hover { background: rgba(99,179,237,0.1); }
+.auth-btn { width: 100%; background: var(--accent); color: #0a0e1a; border: none; font-family: var(--sans); font-size: 14px; font-weight: 600; padding: 11px; border-radius: 8px; cursor: pointer; margin-top: 0.25rem; transition: opacity 0.15s; }
+.auth-btn:hover { opacity: 0.85; }
+.auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.auth-error { font-size: 12px; color: #fc8181; margin-top: 10px; min-height: 18px; }
+.auth-msg { font-size: 12px; color: var(--accent2); margin-top: 10px; min-height: 18px; }
+
+/* STAND BY: modulos ocultos en modo libre (sin cuenta) */
+.standby { display: none !important; }
+
+/* NAV */
+nav { display: flex; align-items: center; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 1rem; height: 52px; flex-shrink: 0; gap: 1rem; }
+.logo { font-family: var(--sans); font-size: 15px; font-weight: 700; color: var(--accent); letter-spacing: 0; margin-right: auto; }
+.logo span { color: var(--accent2); }
+.nav-tabs { display: flex; gap: 2px; }
+.nav-tab { background: none; border: none; color: var(--muted); font-family: var(--sans); font-size: 13px; padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+.nav-tab:hover { color: var(--text); background: var(--surface2); }
+.nav-tab.active { color: var(--accent); background: rgba(99,179,237,0.1); }
+.nav-tab.has-notif { position: relative; }
+.nav-tab.has-notif::after { content: ''; position: absolute; top: 4px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: #fc8181; border: 2px solid var(--surface); }
+.nav-user { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.nav-avatar { width: 30px; height: 30px; border-radius: 50%; background: rgba(99,179,237,0.15); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 10px; font-weight: 700; overflow: hidden; flex-shrink: 0; }
+.nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.btn-logout { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+.btn-logout:hover { color: #fc8181; border-color: rgba(252,129,129,0.4); }
+
+/* LAYOUT */
+.main { display: flex; flex: 1; overflow: hidden; }
+.sidebar { width: 210px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); padding: 1rem 0.75rem; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+.sidebar-section { font-family: var(--mono); font-size: 10px; color: var(--muted); padding: 10px 8px 4px; text-transform: uppercase; letter-spacing: 1px; }
+.sidebar-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--muted); transition: all 0.15s; }
+.sidebar-item:hover { color: var(--text); background: var(--surface2); }
+.sidebar-item.active { color: var(--accent); background: rgba(99,179,237,0.08); }
+.content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.panel { display: none; padding: 1.5rem; gap: 1.5rem; flex-direction: column; }
+.panel.active { display: flex; }
+.panel-title { font-family: var(--mono); font-size: 14px; color: var(--accent); }
+.panel-sub { font-size: 12px; color: var(--muted); }
+
+/* FEED */
+.feed-header { display: flex; align-items: center; justify-content: space-between; }
+.feed-header h2 { font-family: var(--mono); font-size: 14px; color: var(--accent); }
+.btn-primary { background: var(--accent); color: #0a0e1a; border: none; font-family: var(--sans); font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: opacity 0.15s; }
+.btn-primary:hover { opacity: 0.85; }
+.compose-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+.compose-toolbar { display: flex; flex-wrap: wrap; gap: 2px; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.nav-dropdown { position: relative; display: inline-block; }
+.nav-dropdown-menu { position: absolute; top: calc(100% + 6px); left: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px; min-width: 160px; z-index: 200; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+.dropdown-item { display: block; width: 100%; background: none; border: none; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 8px 12px; border-radius: 6px; cursor: pointer; text-align: left; transition: background 0.12s; }
+.dropdown-item:hover { background: rgba(99,179,237,0.1); color: var(--accent); }
+.rt-btn { background: transparent; border: 1px solid transparent; color: var(--muted); font-family: var(--sans); font-size: 13px; padding: 5px 9px; border-radius: 5px; cursor: pointer; min-width: 28px; transition: all 0.12s; }
+.rt-btn:hover { background: rgba(99,179,237,0.1); color: var(--accent); border-color: rgba(99,179,237,0.2); }
+.rt-sep { width: 1px; height: 18px; background: var(--border); margin: 0 4px; }
+.post-body a { color: var(--accent); text-decoration: underline; }
+.post-body strong { color: var(--text); font-weight: 700; }
+.post-body em { color: var(--accent3); font-style: italic; }
+.post-body code { background: var(--surface2); color: var(--accent2); font-family: var(--mono); font-size: 12px; padding: 2px 6px; border-radius: 4px; }
+.post-body s { color: var(--muted); }
+.post-body blockquote { border-left: 3px solid var(--accent); padding-left: 12px; margin: 8px 0; color: var(--muted); font-style: italic; }
+.post-body h3 { font-size: 16px; color: var(--accent); margin: 8px 0 4px; font-family: var(--mono); }
+.post-body ul { margin: 8px 0; padding-left: 20px; }
+.post-body ul li { margin: 3px 0; }
+.post-body .hashtag { color: var(--accent2); font-weight: 500; cursor: pointer; }
+.post-body .mention { color: var(--accent); font-weight: 500; cursor: pointer; }
+.post-img { max-width: 100%; border-radius: 8px; margin: 8px 0; border: 1px solid var(--border); }
+.compose-input { width: 100%; background: none; border: none; color: var(--text); font-family: var(--sans); font-size: 13px; resize: none; outline: none; min-height: 70px; }
+.compose-input::placeholder { color: var(--muted); }
+.compose-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+.compose-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { background: rgba(99,179,237,0.1); color: var(--accent); font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer; border: 1px solid rgba(99,179,237,0.2); }
+.posts { display: flex; flex-direction: column; gap: 1rem; }
+.post-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; transition: border-color 0.15s; }
+.post-card:hover { border-color: rgba(99,179,237,0.35); }
+.post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 12px; font-weight: 700; flex-shrink: 0; background: rgba(99,179,237,0.15); color: var(--accent); overflow: hidden; cursor: pointer; transition: opacity 0.15s; }
+.avatar:hover { opacity: 0.8; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.post-name { font-size: 13px; font-weight: 500; cursor: pointer; transition: color 0.15s; }
+.post-name:hover { color: var(--accent); }
+.post-info { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.post-rama { font-size: 10px; color: var(--accent2); margin-top: 2px; }
+.post-body { font-size: 13px; line-height: 1.7; margin-bottom: 8px; white-space: pre-wrap; }
+.post-eq { background: var(--surface2); border-left: 3px solid var(--accent); border-radius: 4px; padding: 10px 14px; margin: 8px 0; font-family: var(--mono); font-size: 13px; color: var(--accent3); overflow-x: auto; white-space: pre-wrap; }
+.post-actions { display: flex; gap: 16px; padding-top: 8px; border-top: 1px solid var(--border); }
+.post-action { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); cursor: pointer; background: none; border: none; transition: color 0.15s; }
+.post-action:hover { color: var(--accent); }
+.loading-msg { font-family: var(--mono); font-size: 12px; color: var(--muted); padding: 1rem 0; }
+
+.sidebar-item.area-active { color: var(--accent); background: rgba(99,179,237,0.12); border-left: 2px solid var(--accent); padding-left: calc(0.75rem - 2px); }
+.feed-filter-badge { display:inline-flex; align-items:center; gap:8px; background:rgba(99,179,237,0.1); border:1px solid rgba(99,179,237,0.25); border-radius:20px; padding:4px 12px; font-size:11px; color:var(--accent); font-family:var(--mono); margin-bottom:1rem; }
+.feed-filter-badge button { background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; line-height:1; padding:0 0 0 4px; }
+.feed-filter-badge button:hover { color:var(--text); }
+/* SEARCH PANEL */
+.search-panel-bar { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 16px; margin-bottom:1.25rem; }
+.search-panel-bar input { background:none; border:none; outline:none; color:var(--text); font-family:var(--sans); font-size:14px; flex:1; }
+.search-panel-bar input::placeholder { color:var(--muted); }
+.search-results-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:1rem; }
+.user-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1.25rem 1rem; display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer; transition:border-color 0.15s,transform 0.15s; text-align:center; }
+.user-card:hover { border-color:rgba(99,179,237,0.45); transform:translateY(-2px); }
+.user-card-avatar { width:56px; height:56px; border-radius:50%; background:rgba(99,179,237,0.15); color:var(--accent); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:18px; font-weight:700; overflow:hidden; flex-shrink:0; }
+.user-card-avatar img { width:100%; height:100%; object-fit:cover; }
+.user-card-name { font-size:13px; font-weight:600; color:var(--text); }
+.user-card-handle { font-size:11px; color:var(--accent); font-family:var(--mono); }
+.user-card-rama { font-size:10px; color:var(--accent2); background:rgba(104,211,145,0.1); border:1px solid rgba(104,211,145,0.2); border-radius:4px; padding:2px 8px; margin-top:2px; }
+.search-empty { font-family:var(--mono); font-size:12px; color:var(--muted); padding:2rem; text-align:center; }
+.sidebar-search-wrap { padding:8px 10px; margin-bottom:4px; }
+.sidebar-search-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:var(--sans); font-size:12px; padding:7px 10px; outline:none; box-sizing:border-box; }
+.sidebar-search-input::placeholder { color:var(--muted); }
+.sidebar-search-results { margin:0 4px; display:flex; flex-direction:column; gap:4px; max-height:260px; overflow-y:auto; }
+.sidebar-user-item { display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:8px; cursor:pointer; transition:background 0.12s; }
+.sidebar-user-item:hover { background:rgba(99,179,237,0.1); }
+.sidebar-user-av { width:30px; height:30px; border-radius:50%; background:rgba(99,179,237,0.15); color:var(--accent); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:10px; font-weight:700; overflow:hidden; flex-shrink:0; }
+.sidebar-user-av img { width:100%; height:100%; object-fit:cover; }
+.sidebar-user-info { min-width:0; }
+.sidebar-user-name { font-size:12px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sidebar-user-handle { font-size:10px; color:var(--muted); font-family:var(--mono); }
+
+/* PUBLIC PROFILE MODAL */
+#pub-profile-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
+#pub-profile-modal.open { display: flex; }
+.pub-profile-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; width: 420px; max-width: 100%; position: relative; }
+.modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; line-height: 1; }
+.modal-close:hover { color: var(--text); }
+.pub-avatar { width: 72px; height: 72px; border-radius: 50%; background: rgba(99,179,237,0.15); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 22px; font-weight: 700; overflow: hidden; margin-bottom: 1rem; }
+.pub-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.pub-name { font-family: var(--mono); font-size: 17px; color: var(--text); }
+.pub-handle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.pub-rama { display: inline-block; margin-top: 8px; font-size: 11px; padding: 3px 10px; border-radius: 4px; background: rgba(104,211,145,0.1); color: var(--accent2); border: 1px solid rgba(104,211,145,0.2); }
+.pub-stats { display: flex; gap: 1.5rem; margin: 1rem 0; }
+.pub-actions { display: flex; gap: 10px; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.btn-secondary { background: none; border: 1px solid var(--border); color: var(--text); font-family: var(--sans); font-size: 12px; padding: 7px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger { background: none; border: 1px solid rgba(252,129,129,0.3); color: #fc8181; font-family: var(--sans); font-size: 12px; padding: 7px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+
+/* MESSAGES PANEL */
+.messages-layout { display: grid; grid-template-columns: 260px 1fr; gap: 0; flex: 1; min-height: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.conv-list { border-right: 1px solid var(--border); overflow-y: auto; background: var(--surface); }
+.conv-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.conv-item:hover { background: var(--surface2); }
+.conv-item.active { background: rgba(99,179,237,0.08); }
+.conv-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(99,179,237,0.15); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; font-weight: 700; flex-shrink: 0; overflow: hidden; }
+.conv-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.conv-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.conv-preview { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+.conv-unread { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-left: auto; }
+.chat-area { display: flex; flex-direction: column; background: var(--bg); }
+.chat-header { padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 10px; }
+.chat-header-name { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+.chat-messages { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 10px; }
+.chat-empty { display: flex; align-items: center; justify-content: center; flex: 1; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.msg-bubble { max-width: 70%; padding: 8px 12px; border-radius: 10px; font-size: 13px; line-height: 1.6; word-break: break-word; }
+.msg-bubble.mine { background: rgba(99,179,237,0.15); color: var(--text); align-self: flex-end; border-bottom-right-radius: 3px; }
+.msg-bubble.theirs { background: var(--surface); color: var(--text); align-self: flex-start; border-bottom-left-radius: 3px; border: 1px solid var(--border); }
+.msg-time { font-size: 10px; color: var(--muted); margin-top: 3px; }
+.msg-row { display: flex; flex-direction: column; }
+.msg-row.mine { align-items: flex-end; }
+.msg-row.theirs { align-items: flex-start; }
+.chat-input-area { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 10px; background: var(--surface); }
+.chat-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 9px 14px; outline: none; resize: none; max-height: 100px; }
+.chat-input:focus { border-color: var(--accent); }
+.chat-send-btn { background: var(--accent); color: #0a0e1a; border: none; border-radius: 8px; padding: 9px 16px; font-family: var(--sans); font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+
+/* REQUESTS PANEL */
+.request-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; }
+.request-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.request-msg { font-size: 13px; color: var(--text); line-height: 1.6; padding: 10px 12px; background: var(--surface2); border-radius: 6px; margin-bottom: 12px; }
+.request-actions { display: flex; gap: 8px; }
+.btn-accept { background: rgba(104,211,145,0.15); color: var(--accent2); border: 1px solid rgba(104,211,145,0.3); font-family: var(--sans); font-size: 12px; padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+.btn-accept:hover { background: rgba(104,211,145,0.25); }
+.btn-reject { background: rgba(252,129,129,0.1); color: #fc8181; border: 1px solid rgba(252,129,129,0.3); font-family: var(--sans); font-size: 12px; padding: 6px 14px; border-radius: 6px; cursor: pointer; }
+
+/* SEND MESSAGE MODAL */
+#send-msg-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 300; align-items: center; justify-content: center; padding: 1rem; }
+#send-msg-modal.open { display: flex; }
+.send-msg-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; width: 420px; max-width: 100%; position: relative; }
+.send-msg-to { font-size: 12px; color: var(--muted); margin-bottom: 1rem; }
+.send-msg-to span { color: var(--accent); font-family: var(--mono); }
+.send-msg-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px; padding: 10px 14px; outline: none; resize: none; min-height: 100px; }
+.send-msg-textarea:focus { border-color: var(--accent); }
+.send-msg-notice { font-size: 11px; color: var(--accent3); margin-top: 8px; padding: 8px 10px; background: rgba(246,173,85,0.08); border-radius: 6px; border: 1px solid rgba(246,173,85,0.2); }
+
+/* CALCULATOR */
+.calc-layout { display: grid; grid-template-columns: 1fr 280px; gap: 1.5rem; }
+.calc-display { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.calc-expression { font-family: var(--mono); font-size: 12px; color: var(--muted); min-height: 20px; word-break: break-all; }
+.calc-result { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--accent); text-align: right; min-height: 40px; margin-top: 4px; }
+.calc-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.calc-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--mono); font-size: 12px; padding: 11px 6px; cursor: pointer; transition: all 0.1s; }
+.calc-btn:hover { background: var(--surface2); border-color: rgba(99,179,237,0.4); color: var(--accent); }
+.calc-btn:active { transform: scale(0.96); }
+.calc-btn.op { color: var(--accent); }
+.calc-btn.fn { color: var(--accent2); font-size: 10px; }
+.calc-btn.clear { color: #fc8181; }
+.calc-btn.eq { background: var(--accent); color: #0a0e1a; font-weight: 700; border-color: transparent; }
+.calc-btn.span2 { grid-column: span 2; }
+.constants-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; overflow-y: auto; }
+.constants-title { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.constant-item { display: flex; align-items: flex-start; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); gap: 8px; cursor: pointer; }
+.constant-item:last-child { border-bottom: none; }
+.constant-item:hover .const-symbol { color: var(--accent2); }
+.const-symbol { font-family: var(--mono); font-size: 13px; color: var(--accent); min-width: 32px; }
+.const-name { font-size: 11px; color: var(--muted); flex: 1; }
+.const-val { font-family: var(--mono); font-size: 10px; color: var(--accent3); text-align: right; }
+
+/* THEOREMS / CONSTANTS */
+.search-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; display: flex; align-items: center; gap: 10px; }
+.search-input { background: none; border: none; color: var(--text); font-family: var(--sans); font-size: 13px; outline: none; flex: 1; }
+.search-input::placeholder { color: var(--muted); }
+.theorems-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.theorem-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; cursor: pointer; transition: all 0.15s; }
+.theorem-card:hover { border-color: rgba(99,179,237,0.4); transform: translateY(-2px); }
+.theorem-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.theorem-name { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+.theorem-area { font-size: 10px; padding: 3px 8px; border-radius: 4px; background: rgba(104,211,145,0.1); color: var(--accent2); border: 1px solid rgba(104,211,145,0.2); }
+.theorem-eq { background: var(--surface2); border-radius: 6px; padding: 10px 12px; font-family: var(--mono); font-size: 13px; color: var(--accent3); margin: 8px 0; overflow-x: auto; }
+.theorem-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* PROFILE PANEL */
+.profile-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; }
+.profile-top { display: flex; align-items: flex-start; gap: 1.5rem; margin-bottom: 1.5rem; }
+.profile-avatar-wrap { position: relative; flex-shrink: 0; }
+.profile-avatar-lg { width: 80px; height: 80px; border-radius: 50%; background: rgba(99,179,237,0.15); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 24px; font-weight: 700; overflow: hidden; border: 2px solid var(--border); }
+.profile-avatar-lg img { width: 100%; height: 100%; object-fit: cover; }
+.profile-change-avatar { position: absolute; bottom: 0; right: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #0a0e1a; font-size: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid var(--bg); }
+.profile-name-big { font-family: var(--mono); font-size: 18px; color: var(--text); }
+.profile-handle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.profile-rama { display: inline-block; margin-top: 8px; font-size: 11px; padding: 3px 10px; border-radius: 4px; background: rgba(104,211,145,0.1); color: var(--accent2); border: 1px solid rgba(104,211,145,0.2); }
+.profile-stats { display: flex; gap: 2rem; margin-top: 12px; }
+.pstat-val { font-family: var(--mono); font-size: 20px; color: var(--accent); font-weight: 700; }
+.pstat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.profile-details { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+.profile-detail-item { display: flex; flex-direction: column; gap: 3px; }
+.profile-detail-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.profile-detail-val { font-size: 13px; color: var(--text); }
+
+/* NEWS */
+.news-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: border-color 0.15s; cursor: pointer; }
+.news-card:hover { border-color: rgba(99,179,237,0.4); }
+.news-img { width: 100%; height: 180px; object-fit: cover; display: block; }
+.news-img-placeholder { width: 100%; height: 180px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 40px; }
+.news-body { padding: 1rem 1.25rem; }
+.news-source { font-size: 10px; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-family: var(--mono); }
+.news-title { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.5; margin-bottom: 8px; }
+.news-desc { font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
+.news-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 8px; border-top: 1px solid var(--border); }
+.news-date { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+.news-link { font-size: 11px; color: var(--accent); }
+.news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+
+/* NOTIFICATIONS */
+.notif-item { display: flex; gap: 12px; padding: 14px 16px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
+.notif-item:hover { border-color: rgba(99,179,237,0.4); }
+.notif-item.unread { background: rgba(99,179,237,0.08); border-color: rgba(99,179,237,0.3); }
+.notif-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 14px; color: var(--accent); flex-shrink: 0; overflow: hidden; }
+.notif-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.notif-body { flex: 1; min-width: 0; }
+.notif-text { font-size: 13px; color: var(--text); margin-bottom: 4px; line-height: 1.5; }
+.notif-time { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+.notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 16px; flex-shrink: 0; }
+
+/* TOAST */
+#toast { display:none; position:fixed; bottom:1.5rem; right:1.5rem; background:var(--accent); color:#0a0e1a; font-family:var(--mono); font-size:12px; font-weight:700; padding:8px 16px; border-radius:8px; z-index:999; }
+#toast.error { background: #fc8181; color: #fff; }
+
+/* ═══════════════════════════════════════════════
+   LANDING PAGE
+═══════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,700;0,900;1,300;1,700;1,900&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap');
+
+#landing {
+  position: fixed; inset: 0; z-index: 500;
+  display: flex; flex-direction: column;
+  background: #06090f;
+  overflow: hidden;
+  font-family: 'Outfit', sans-serif;
+}
+
+/* ─── HERO BG ─── */
+#lnd-hero-bg {
+  position: absolute; inset: 0;
+  background: #06090f;
+  transition: background-image 1.2s ease;
+  background-size: cover; background-position: center;
+}
+#lnd-hero-bg::after {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(to right, rgba(6,9,15,0.82) 0%, rgba(6,9,15,0.45) 40%, rgba(6,9,15,0.85) 100%),
+    linear-gradient(to top, rgba(6,9,15,0.95) 0%, transparent 40%);
+}
+
+/* ─── TOPBAR ─── */
+#lnd-topbar {
+  position: relative; z-index: 10;
+  display: flex; align-items: center;
+  padding: 0 2.5rem;
+  height: 60px;
+  border-bottom: 1px solid rgba(99,179,237,0.08);
+  background: rgba(6,9,15,0.6);
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+}
+.lnd-logo {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 18px; font-weight: 700;
+  color: var(--accent); letter-spacing: 1px;
+  margin-right: auto; display: flex; align-items: center; gap: 10px;
+}
+.lnd-logo-icon {
+  width: 36px; height: 36px; background: var(--accent);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: #06090f; font-weight: 400; line-height: 1;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-style: italic; padding-bottom: 6px;
+}
+.lnd-logo span { color: var(--accent2); }
+.phi-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; background: var(--accent);
+  border-radius: 50%; font-family: 'Georgia', 'Times New Roman', serif;
+  font-style: italic; font-size: 22px; font-weight: 400;
+  color: #06090f !important; line-height: 1; flex-shrink: 0;
+  padding-bottom: 6px;
+}
+.lnd-nav { display: flex; align-items: center; gap: 4px; }
+.lnd-nav-link {
+  background: none; border: none; color: rgba(226,232,240,0.6);
+  font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 400;
+  padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s;
+}
+.lnd-nav-link:hover { color: var(--text); background: rgba(99,179,237,0.08); }
+.lnd-nav-search {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(99,179,237,0.15);
+  border-radius: 20px; display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px; margin: 0 8px;
+}
+.lnd-nav-search input {
+  background: none; border: none; outline: none;
+  color: var(--text); font-family: 'Outfit', sans-serif; font-size: 12px;
+  width: 140px;
+}
+.lnd-nav-search input::placeholder { color: var(--muted); }
+.lnd-auth-btns { display: flex; align-items: center; gap: 8px; }
+.lnd-btn-login {
+  background: none; border: 1px solid rgba(99,179,237,0.25);
+  color: var(--accent); font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 500;
+  padding: 7px 16px; border-radius: 6px; cursor: pointer; transition: all 0.15s;
+}
+.lnd-btn-login:hover { background: rgba(99,179,237,0.1); }
+.lnd-btn-register {
+  background: var(--accent2); border: none;
+  color: #06090f; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700;
+  padding: 7px 16px; border-radius: 6px; cursor: pointer; transition: all 0.15s;
+}
+.lnd-btn-register:hover { opacity: 0.85; }
+
+/* ─── HERO CONTENT ─── */
+#lnd-hero {
+  position: relative; z-index: 5;
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: center; align-items: flex-end;
+  padding: 0 5% 0 0;
+  min-height: 0;
+}
+.lnd-hero-content {
+  max-width: 560px;
+  text-align: right;
+  animation: lndFadeUp 0.9s ease forwards;
+}
+@keyframes lndFadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.lnd-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(104,211,145,0.1); border: 1px solid rgba(104,211,145,0.25);
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 11px; color: var(--accent2); font-family: 'DM Mono', monospace;
+  letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 1.2rem;
+}
+.lnd-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.3; } }
+.lnd-headline {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2.8rem, 5.5vw, 5rem);
+  font-weight: 900; line-height: 1.0;
+  color: #fff; margin-bottom: 0.5rem;
+}
+.lnd-headline em {
+  font-style: italic; color: var(--accent);
+}
+.lnd-tagline {
+  font-size: clamp(0.85rem, 1.2vw, 1rem);
+  color: rgba(226,232,240,0.65); line-height: 1.7;
+  margin-bottom: 1.2rem; max-width: 420px; margin-left: auto;
+}
+.lnd-source-label {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: rgba(99,179,237,0.5); letter-spacing: 1px;
+  text-transform: uppercase; margin-bottom: 2rem;
+}
+.lnd-cta-row { display: flex; gap: 10px; justify-content: flex-end; }
+.lnd-cta-primary {
+  background: var(--accent2); color: #06090f;
+  border: none; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700;
+  padding: 13px 28px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 0 24px rgba(104,211,145,0.3);
+}
+.lnd-cta-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 32px rgba(104,211,145,0.5); }
+.lnd-cta-secondary {
+  background: rgba(255,255,255,0.07); color: var(--text);
+  border: 1px solid rgba(255,255,255,0.12); font-family: 'Outfit', sans-serif;
+  font-size: 14px; font-weight: 500; padding: 13px 28px; border-radius: 8px; cursor: pointer; transition: all 0.15s;
+}
+.lnd-cta-secondary:hover { background: rgba(255,255,255,0.12); }
+
+/* ─── SCROLL INDICATOR ─── */
+.lnd-scroll-hint {
+  position: relative; z-index: 5;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 12px 0 6px;
+  flex-shrink: 0;
+  cursor: pointer;
+  color: rgba(226,232,240,0.35); font-size: 10px; font-family: 'DM Mono', monospace;
+  letter-spacing: 1.5px; text-transform: uppercase; gap: 5px;
+  transition: color 0.2s;
+}
+.lnd-scroll-hint:hover { color: var(--accent); }
+.lnd-scroll-arrow { animation: scrollBounce 2s ease infinite; font-size: 14px; }
+@keyframes scrollBounce { 0%,100%{ transform:translateY(0); } 60%{ transform:translateY(5px); } }
+
+/* ─── NEWS TICKER ─── */
+#lnd-news-bar {
+  position: relative; z-index: 5;
+  background: rgba(10,14,26,0.9);
+  border-top: 1px solid rgba(99,179,237,0.12);
+  height: 44px; overflow: hidden;
+  flex-shrink: 0;
+  display: flex; align-items: center;
+}
+.lnd-news-label {
+  flex-shrink: 0; padding: 0 14px;
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+  border-right: 1px solid rgba(99,179,237,0.15);
+  height: 100%; display: flex; align-items: center;
+  background: rgba(99,179,237,0.05);
+}
+.lnd-news-scroll-wrap { flex: 1; overflow: hidden; position: relative; }
+.lnd-news-ticker {
+  display: flex; gap: 0; white-space: nowrap;
+  animation: tickerScroll 60s linear infinite;
+}
+.lnd-news-ticker:hover { animation-play-state: paused; }
+@keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.lnd-news-item {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 0 28px; font-size: 12px; color: rgba(226,232,240,0.7);
+  cursor: pointer; transition: color 0.15s;
+}
+.lnd-news-item:hover { color: var(--accent); }
+.lnd-news-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent2); flex-shrink: 0; }
+.lnd-news-src { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--accent3); text-transform: uppercase; letter-spacing: 1px; }
+
+/* ─── NEWS PANEL (below fold) ─── */
+#lnd-news-panel {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(6,9,15,0.97);
+  border-top: 1px solid rgba(99,179,237,0.12);
+  backdrop-filter: blur(16px);
+  z-index: 20;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.22,1,0.36,1);
+  max-height: 70vh; overflow-y: auto;
+  padding: 2rem 2.5rem;
+}
+#lnd-news-panel.open { transform: translateY(0); }
+.lnd-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.lnd-panel-title { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--accent); }
+.lnd-panel-close {
+  background: none; border: 1px solid rgba(99,179,237,0.2);
+  color: var(--muted); font-size: 16px; width: 28px; height: 28px;
+  border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.lnd-panel-close:hover { color: var(--text); border-color: var(--accent); }
+.lnd-news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+.lnd-news-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1rem 1.25rem;
+  cursor: pointer; transition: border-color 0.15s, transform 0.15s;
+}
+.lnd-news-card:hover { border-color: rgba(99,179,237,0.4); transform: translateY(-2px); }
+.lnc-source { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--accent3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.lnc-title { font-size: 13px; color: var(--text); line-height: 1.5; font-weight: 500; margin-bottom: 6px; }
+.lnc-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  #lnd-topbar { padding: 0 1.2rem; }
+  .lnd-nav { display: none; }
+  .lnd-nav-search { display: none; }
+  #lnd-hero { align-items: center; padding: 0 1.5rem; }
+  .lnd-hero-content { text-align: center; max-width: 100%; }
+  .lnd-tagline { margin-left: 0; }
+  .lnd-cta-row { justify-content: center; flex-wrap: wrap; }
+  #lnd-news-panel { padding: 1.5rem 1.2rem; }
+}
+@media (max-width: 600px) {
+  .lnd-logo-icon { width: 30px; height: 30px; font-size: 18px; }
+  .lnd-logo { font-size: 15px; }
+  .lnd-headline { font-size: clamp(2rem, 9vw, 3rem); }
+  .lnd-btn-login span, .lnd-btn-register span { display: none; }
+  .lnd-auth-btns { gap: 6px; }
+  .lnd-cta-primary, .lnd-cta-secondary { padding: 11px 20px; font-size: 13px; }
+  .lnd-news-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 400px) {
+  #lnd-topbar { padding: 0 0.8rem; height: 52px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════
+     LANDING PAGE
+════════════════════════════════════════════════ -->
+<div id="landing">
+  <!-- Hero BG -->
+  <div id="lnd-hero-bg"></div>
+
+  <!-- Topbar -->
+  <div id="lnd-topbar">
+    <div class="lnd-logo">
+      <div class="lnd-logo-icon">φ</div>
+      <span style="color:var(--accent2);font-weight:700;">Phynity</span>
+    </div>
+    <div class="lnd-auth-btns">
+      <button class="lnd-btn-register" onclick="enterApp()">Entrar →</button>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div id="lnd-hero">
+    <div class="lnd-hero-content" id="lnd-hero-content">
+      <div class="lnd-badge"><div class="lnd-badge-dot"></div>DESCUBRE · APRENDE · CONECTA</div>
+      <div class="lnd-headline" id="lnd-headline">La física,<br><em>tu pasión.</em></div>
+      <p class="lnd-tagline" id="lnd-tagline">La red social para físicos y amantes de la ciencia. Debates, herramientas, noticias y comunidad en un solo lugar.</p>
+      <div class="lnd-source-label" id="lnd-source-label">// cargando noticias...</div>
+      <div class="lnd-cta-row">
+        <button class="lnd-cta-primary" onclick="enterApp()">Entrar a Phynity</button>
+        <button class="lnd-cta-secondary" onclick="landingScrollNews()">Noticias →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scroll hint -->
+  <div class="lnd-scroll-hint" onclick="landingScrollNews()">
+    <span>Noticias</span>
+    <span class="lnd-scroll-arrow">↓</span>
+  </div>
+
+  <!-- News ticker -->
+  <div id="lnd-news-bar">
+    <div class="lnd-news-label">// en vivo</div>
+    <div class="lnd-news-scroll-wrap">
+      <div class="lnd-news-ticker" id="lnd-ticker">
+        <span class="lnd-news-item"><span class="lnd-news-dot"></span><span class="lnd-news-src">ADM</span> Cargando noticias...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- News panel overlay -->
+  <div id="lnd-news-panel">
+    <div class="lnd-panel-header">
+      <div class="lnd-panel-title">// noticias · The Guardian + ADM + Science Alert + ALMA</div>
+      <button class="lnd-panel-close" onclick="landingCloseNews()">×</button>
+    </div>
+    <div class="lnd-news-grid" id="lnd-news-grid">
+      <div style="color:var(--muted);font-size:12px;font-family:var(--mono);">// cargando...</div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div id="auth-screen" style="display:none;">
+  <div class="auth-box">
+    <div class="auth-logo" style="display:flex;align-items:center;gap:10px;"><span class="phi-icon">φ</span><span style="color:var(--accent2);">Phynity</span></div>
+    <div class="auth-sub">La red social para físicos y amantes de la ciencia</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login',this)">Iniciar sesión</button>
+      <button class="auth-tab" onclick="switchAuthTab('register',this)">Registrarse</button>
+    </div>
+    <div id="auth-login">
+      <div class="auth-field"><label class="auth-label">Email</label><input class="auth-input" type="email" id="login-email" placeholder="tu@email.com"></div>
+      <div class="auth-field"><label class="auth-label">Contraseña</label><input class="auth-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="auth-btn" onclick="doLogin()">Entrar</button>
+      <div class="auth-error" id="login-error"></div>
+    </div>
+    <div id="auth-register" style="display:none;">
+      <div class="avatar-upload">
+        <div class="avatar-preview" id="reg-avatar-preview" onclick="document.getElementById('reg-avatar-file').click()"><span id="reg-avatar-initials">+</span></div>
+        <div><div style="font-size:12px;color:var(--muted);">Foto de perfil · JPG o PNG · máx 2MB</div><span class="avatar-upload-btn" onclick="document.getElementById('reg-avatar-file').click()">Subir foto</span></div>
+      </div>
+      <input type="file" id="reg-avatar-file" accept="image/*" style="display:none" onchange="previewAvatar(this)">
+      <div class="auth-grid">
+        <div class="auth-field"><label class="auth-label">Nombre</label><input class="auth-input" type="text" id="reg-nombre" placeholder="Luis"></div>
+        <div class="auth-field"><label class="auth-label">Apellido</label><input class="auth-input" type="text" id="reg-apellido" placeholder="González"></div>
+        <div class="auth-field auth-field-full"><label class="auth-label">Nombre de usuario</label><input class="auth-input" type="text" id="reg-username" placeholder="profemcfly" oninput="updateAvatarInitials()"></div>
+        <div class="auth-field auth-field-full"><label class="auth-label">Email</label><input class="auth-input" type="email" id="reg-email" placeholder="tu@email.com"></div>
+        <div class="auth-field auth-field-full"><label class="auth-label">Contraseña</label><input class="auth-input" type="password" id="reg-pass" placeholder="mínimo 6 caracteres"></div>
+        <div class="auth-field auth-field-full"><label class="auth-label">Fecha de nacimiento</label><input class="auth-input" type="date" id="reg-fecha" style="color-scheme:dark;"></div>
+        <div class="auth-field auth-field-full"><label class="auth-label">Rama de la física preferida</label><select class="auth-select" id="reg-rama"><option value="" disabled selected>Selecciona una rama...</option><option>Mecánica Clásica</option><option>Mecánica Estadística</option><option>Termodinámica</option><option>Electromagnetismo</option><option>Óptica</option><option>Acústica</option><option>Mecánica Cuántica</option><option>Física Cuántica de Campos</option><option>Relatividad Especial</option><option>Relatividad General</option><option>Física Nuclear</option><option>Física de Partículas</option><option>Astrofísica</option><option>Cosmología</option><option>Física del Estado Sólido</option><option>Física de Plasma</option><option>Física Atómica y Molecular</option><option>Biofísica</option><option>Física Computacional</option><option>Física Matemática</option><option>Enseñanza de la Física</option><option>Divulgación Científica</option></select></div>
+      </div>
+      <button class="auth-btn" id="reg-btn" onclick="doRegister()">Crear cuenta</button>
+      <div class="auth-error" id="reg-error"></div>
+      <div class="auth-msg" id="reg-msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PUBLIC PROFILE MODAL -->
+<div id="pub-profile-modal">
+  <div class="pub-profile-box">
+    <button class="modal-close" onclick="closePubProfile()">×</button>
+    <div class="pub-avatar" id="pub-av"></div>
+    <div class="pub-name" id="pub-name"></div>
+    <div class="pub-handle" id="pub-handle"></div>
+    <div class="pub-rama" id="pub-rama" style="display:none;"></div>
+    <div class="pub-stats">
+      <div class="pstat"><div class="pstat-val" id="pub-posts">0</div><div class="pstat-label">posts</div></div>
+    </div>
+    <div class="pub-actions" id="pub-actions"></div>
+  </div>
+</div>
+
+<!-- SEND MESSAGE MODAL -->
+<div id="send-msg-modal">
+  <div class="send-msg-box">
+    <button class="modal-close" onclick="closeSendMsg()">×</button>
+    <div style="font-family:var(--mono);font-size:13px;color:var(--accent);margin-bottom:1rem;">// nuevo_mensaje</div>
+    <div class="send-msg-to">Para: <span id="send-msg-to-name"></span></div>
+    <textarea class="send-msg-textarea" id="send-msg-text" placeholder="Escribe tu mensaje..."></textarea>
+    <div class="send-msg-notice">⚠ Este es tu primer mensaje a esta persona. Será enviado como solicitud — ella podrá aceptarlo o rechazarlo antes de que puedan conversar.</div>
+    <div style="display:flex;gap:10px;margin-top:1rem;">
+      <button class="auth-btn" onclick="doSendRequest()" style="flex:1;">Enviar solicitud</button>
+      <button onclick="closeSendMsg()" style="flex:0 0 auto;background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--sans);font-size:13px;padding:11px 18px;border-radius:8px;cursor:pointer;">Cancelar</button>
+    </div>
+    <div class="auth-error" id="send-msg-error"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app" id="main-app" style="display:none;">
+  <nav>
+    <div class="logo" style="display:flex;align-items:center;gap:8px;"><span class="phi-icon" style="width:26px;height:26px;font-size:18px;border-radius:50%;">φ</span><span style="color:var(--accent2);">Phynity</span></div>
+    <div class="nav-tabs">
+      <button class="nav-tab standby" onclick="showPanel('feed',this)">◈ Feed</button>
+      <button class="nav-tab standby" onclick="showPanel('search',this)">🔍 Buscar</button>
+      <div class="nav-dropdown" id="tools-dropdown">
+        <button class="nav-tab" onclick="toggleToolsMenu(event)">🔧 Herramientas ▾</button>
+        <div class="nav-dropdown-menu" id="tools-menu" style="display:none;">
+          <button class="dropdown-item" onclick="showPanel('calc',null);closeToolsMenu()">⊞ Calculadora</button>
+          <button class="dropdown-item" onclick="showPanel('theorems',null);closeToolsMenu()">∑ Teoremas</button>
+          <button class="dropdown-item" onclick="showPanel('constants',null);closeToolsMenu()">φ Constantes</button>
+        </div>
+      </div>
+      <button class="nav-tab standby" id="tab-messages" onclick="showPanel('messages',this)">✉ Mensajes</button>
+      <button class="nav-tab active" onclick="showPanel('news',this)">📰 Noticias</button>
+      <button class="nav-tab standby" onclick="showPanel('profile',this)">◎ Perfil</button>
+      <button class="nav-tab standby" onclick="showPanel('notifications',this)" style="position:relative;">🔔 <span id="notif-badge" style="display:none;position:absolute;top:4px;right:2px;background:#fc8181;color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;padding:0 4px;line-height:16px;">0</span></button>
+      <button class="nav-tab" onclick="showPanel('games',this)">🎮 Juegos</button>
+      <button class="nav-tab" id="tab-admin" style="display:none;color:#fc8181;border:1px solid rgba(252,129,129,0.2);border-radius:6px;">⚙ Admin</button>
+    </div>
+    <div class="nav-user standby">
+      <div class="nav-avatar" id="nav-avatar"><span id="nav-initials">?</span></div>
+      <span id="nav-username"></span>
+      <button class="btn-logout" onclick="doLogout()">salir</button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="sidebar-section">Explorar</div>
+      <div class="sidebar-item standby" onclick="showPanel('feed',null)">◈ Feed</div>
+      <div class="sidebar-item active" onclick="showPanel('news',null)">📰 Noticias</div>
+      <div class="sidebar-item" onclick="showPanel('games',null)">🎮 Juegos</div>
+      <div class="sidebar-section">Herramientas</div>
+      <div class="sidebar-item" onclick="showPanel('calc',null)">⊞ Calculadora</div>
+      <div class="sidebar-item" onclick="showPanel('theorems',null)">∑ Teoremas</div>
+      <div class="sidebar-item" onclick="showPanel('constants',null)">φ Constantes</div>
+      <div class="sidebar-section standby" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;" onclick="toggleAreasMenu()">
+        <span>Áreas</span><span id="areas-arrow" style="font-size:10px;color:var(--muted);transition:transform 0.2s;">▾</span>
+      </div>
+      <div id="areas-menu" style="display:none;flex-direction:column;gap:2px;margin-bottom:4px;">
+        <div class="sidebar-item" id="area-clasica"       onclick="filterByArea('clasica','⚙ Mecánica Clásica',['mecánica clásica','mecanica clasica','newton','cinemática','cinematica','dinámica','dinamica'])">⚙ Mecánica Clásica</div>
+        <div class="sidebar-item" id="area-estadistica"   onclick="filterByArea('estadistica','📊 Mec. Estadística',['estadística','estadistica','boltzmann','entropia','entropía','distribución'])">📊 Mec. Estadística</div>
+        <div class="sidebar-item" id="area-termo"         onclick="filterByArea('termo','🌡 Termodinámica',['termodinámica','termodinamica','calor','temperatura','termal','carnot'])">🌡 Termodinámica</div>
+        <div class="sidebar-item" id="area-em"            onclick="filterByArea('em','⚡ Electromagnetismo',['electromagnetismo','electrodinámica','electrodinamica','maxwell','campo eléctrico','campo magnético'])">⚡ Electromagnetismo</div>
+        <div class="sidebar-item" id="area-optica"        onclick="filterByArea('optica','🔭 Óptica',['óptica','optica','luz','fotón','foton','láser','laser','interferencia','difracción'])">🔭 Óptica</div>
+        <div class="sidebar-item" id="area-acustica"      onclick="filterByArea('acustica','∿ Acústica',['acústica','acustica','sonido','onda sonora','frecuencia','vibración'])">∿ Acústica</div>
+        <div class="sidebar-item" id="area-cuantica"      onclick="filterByArea('cuantica','φ Mecánica Cuántica',['cuántica','cuantica','quantum','qubit','superposición','función de onda','schrödinger'])">φ Mecánica Cuántica</div>
+        <div class="sidebar-item" id="area-qft"           onclick="filterByArea('qft','⚛ Física Cuántica de Campos',['qft','campo cuántico','campo cuantico','bosón','fermión','feynman','lagrangiano'])">⚛ Física Cuántica Campos</div>
+        <div class="sidebar-item" id="area-re"            onclick="filterByArea('re','🚀 Relatividad Especial',['relatividad especial','lorentz','espacio-tiempo','invariante','dilatación del tiempo'])">🚀 Relatividad Especial</div>
+        <div class="sidebar-item" id="area-rg"            onclick="filterByArea('rg','🌀 Relatividad General',['relatividad general','einstein','curvatura','tensor','agujero negro','gravedad'])">🌀 Relatividad General</div>
+        <div class="sidebar-item" id="area-nuclear"       onclick="filterByArea('nuclear','☢ Física Nuclear',['nuclear','fisión','fusión','radioactividad','neutrón','protón','núcleo'])">☢ Física Nuclear</div>
+        <div class="sidebar-item" id="area-particulas"    onclick="filterByArea('particulas','🔬 Física de Partículas',['partículas','particulas','quarks','leptones','bosón de higgs','modelo estándar','acelerador'])">🔬 Física de Partículas</div>
+        <div class="sidebar-item" id="area-astrofisica"   onclick="filterByArea('astrofisica','🌟 Astrofísica',['astrofísica','astrofisica','estrella','pulsar','supernova','nebulosa','galaxia'])">🌟 Astrofísica</div>
+        <div class="sidebar-item" id="area-cosmologia"    onclick="filterByArea('cosmologia','🌌 Cosmología',['cosmología','cosmologia','universo','big bang','materia oscura','energía oscura','expansión'])">🌌 Cosmología</div>
+        <div class="sidebar-item" id="area-solido"        onclick="filterByArea('solido','💎 Estado Sólido',['estado sólido','estado solido','cristal','semiconductor','banda de conducción','superconductor'])">💎 Estado Sólido</div>
+        <div class="sidebar-item" id="area-plasma"        onclick="filterByArea('plasma','🔥 Física de Plasma',['plasma','fusión nuclear','tokamak','magnetosfera','ionización'])">🔥 Física de Plasma</div>
+        <div class="sidebar-item" id="area-atomica"       onclick="filterByArea('atomica','⚛ Física Atómica',['atómica','atomica','átomo','electrón','orbital','espectro','ionización'])">⚛ Física Atómica y Molecular</div>
+        <div class="sidebar-item" id="area-biofisica"     onclick="filterByArea('biofisica','🧬 Biofísica',['biofísica','biofisica','proteína','membrana','adn','célula','biológico'])">🧬 Biofísica</div>
+        <div class="sidebar-item" id="area-computacional" onclick="filterByArea('computacional','💻 Física Computacional',['computacional','simulación','simulacion','algoritmo','monte carlo','numérico'])">💻 Física Computacional</div>
+        <div class="sidebar-item" id="area-matematica"    onclick="filterByArea('matematica','∑ Física Matemática',['matemática','matematica','grupo','topología','ecuación diferencial','hamiltoniano','lagrangiano'])">∑ Física Matemática</div>
+        <div class="sidebar-item" id="area-ensenanza"     onclick="filterByArea('ensenanza','📚 Enseñanza de la Física',['enseñanza','educación','docencia','didáctica','clase','estudiante','pedagogía'])">📚 Enseñanza de la Física</div>
+        <div class="sidebar-item" id="area-divulgacion"   onclick="filterByArea('divulgacion','📡 Divulgación Científica',['divulgación','divulgacion','comunicación','podcast','ciencia popular','outreach'])">📡 Divulgación Científica</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- SEARCH -->
+      <div class="panel" id="panel-search">
+        <div class="panel-title">// buscar_usuarios</div>
+        <div class="search-panel-bar">
+          <span style="color:var(--muted);font-size:16px;">⌕</span>
+          <input type="text" id="search-panel-input" placeholder="Buscar por nombre, apellido o @usuario..." oninput="panelSearchUsers(this.value)" autocomplete="off">
+        </div>
+        <div id="search-panel-results">
+          <div class="search-empty">// escribe para buscar físicos</div>
+        </div>
+      </div>
+
+      <!-- FEED -->
+      <div class="panel" id="panel-feed">
+<div class="panel-title" id="feed-title">// feed_principal</div>
+<div id="feed-filter-badge" class="feed-filter-badge" style="display:none;"><span></span><button onclick="clearAreaFilter()" title="Quitar filtro">×</button></div>
+<div class="compose-box">
+          <div class="compose-toolbar" id="compose-toolbar">
+            <button class="rt-btn" onclick="rtWrap('**','**')" title="Negrita (Ctrl+B)"><b>B</b></button>
+            <button class="rt-btn" onclick="rtWrap('*','*')" title="Cursiva (Ctrl+I)"><i>I</i></button>
+            <button class="rt-btn" onclick="rtWrap('~~','~~')" title="Tachado"><s>S</s></button>
+            <button class="rt-btn" onclick="rtWrap('`','`')" title="Código"><span style="font-family:var(--mono);font-size:12px;">&lt;/&gt;</span></button>
+            <span class="rt-sep"></span>
+            <button class="rt-btn" onclick="rtHeading()" title="Encabezado">H</button>
+            <button class="rt-btn" onclick="rtPrefix('- ')" title="Lista">≡</button>
+            <button class="rt-btn" onclick="rtPrefix('> ')" title="Cita">❝</button>
+            <span class="rt-sep"></span>
+            <button class="rt-btn" onclick="rtLink()" title="Enlace">🔗</button>
+            <button class="rt-btn" onclick="rtImageUrl()" title="Imagen por URL">🖼</button>
+            <button class="rt-btn" onclick="document.getElementById('post-img-upload').click()" title="Subir imagen">📎</button>
+            <input type="file" id="post-img-upload" accept="image/*" style="display:none;" onchange="rtUploadImage(this)">
+            <span class="rt-sep"></span>
+            <button class="rt-btn" onclick="rtWrap('[eq]\n','\n[/eq]')" title="Ecuación">∑</button>
+            <button class="rt-btn" onclick="rtMention()" title="Mencionar usuario">@</button>
+            <button class="rt-btn" onclick="rtPrefix('# ')" title="Hashtag">#</button>
+          </div>
+          <textarea class="compose-input" id="compose-text" placeholder="Comparte una ecuación, teorema, o pregunta al universo...&#10;&#10;Usa la barra de arriba para formato: **negrita**, *cursiva*, [eq]...[/eq] para ecuaciones."></textarea>
+          <div class="compose-footer">
+            <div class="compose-tags">
+              <span class="tag" onclick="insertTag('#cuántica')">#cuántica</span>
+              <span class="tag" onclick="insertTag('#relatividad')">#relatividad</span>
+              <span class="tag" onclick="insertTag('#astrofísica')">#astrofísica</span>
+            </div>
+            <button class="btn-primary" onclick="doPost()">Publicar</button>
+          </div>
+        </div>
+        <div class="posts" id="posts-container"><div class="loading-msg">// cargando posts...</div></div>
+      </div>
+
+      <!-- CALCULATOR -->
+      <div class="panel" id="panel-calc">
+        <div class="panel-title">// calculadora_científica</div>
+        <div class="panel-sub">Soporta trig, logaritmos, raíces, potencias, notación científica y constantes físicas</div>
+        <div class="calc-layout">
+          <div>
+            <div class="calc-display"><div class="calc-expression" id="expr">_</div><div class="calc-result" id="result">0</div></div>
+            <div class="calc-grid">
+              <button class="calc-btn fn" onclick="cf('sin(')">sin</button><button class="calc-btn fn" onclick="cf('cos(')">cos</button><button class="calc-btn fn" onclick="cf('tan(')">tan</button><button class="calc-btn fn" onclick="cf('log(')">log</button><button class="calc-btn fn" onclick="cf('ln(')">ln</button>
+              <button class="calc-btn fn" onclick="cf('asin(')">asin</button><button class="calc-btn fn" onclick="cf('acos(')">acos</button><button class="calc-btn fn" onclick="cf('atan(')">atan</button><button class="calc-btn fn" onclick="cf('sqrt(')">√</button><button class="calc-btn fn" onclick="cf('^')">xⁿ</button>
+              <button class="calc-btn fn" onclick="cf('3.14159265')">π</button><button class="calc-btn fn" onclick="cf('2.71828182')">e</button><button class="calc-btn fn" onclick="cf('2.99792458e8')">c</button><button class="calc-btn fn" onclick="cf('6.626e-34')">h</button><button class="calc-btn fn" onclick="cf('6.674e-11')">G</button>
+              <button class="calc-btn clear" onclick="cc()">C</button><button class="calc-btn op" onclick="cf('(')">(</button><button class="calc-btn op" onclick="cf(')')">)</button><button class="calc-btn op" onclick="cf('%')">%</button><button class="calc-btn op" onclick="cf('/')">÷</button>
+              <button class="calc-btn" onclick="cf('7')">7</button><button class="calc-btn" onclick="cf('8')">8</button><button class="calc-btn" onclick="cf('9')">9</button><button class="calc-btn op" onclick="cf('*')">×</button><button class="calc-btn clear" onclick="cd()">⌫</button>
+              <button class="calc-btn" onclick="cf('4')">4</button><button class="calc-btn" onclick="cf('5')">5</button><button class="calc-btn" onclick="cf('6')">6</button><button class="calc-btn op" onclick="cf('-')">−</button><button class="calc-btn fn" onclick="cf('abs(')">|x|</button>
+              <button class="calc-btn" onclick="cf('1')">1</button><button class="calc-btn" onclick="cf('2')">2</button><button class="calc-btn" onclick="cf('3')">3</button><button class="calc-btn op" onclick="cf('+')">+</button><button class="calc-btn fn" onclick="cf('1/')">1/x</button>
+              <button class="calc-btn span2" onclick="cf('0')">0</button><button class="calc-btn" onclick="cf('.')">.</button><button class="calc-btn fn" onclick="cf('e')">EXP</button><button class="calc-btn eq" onclick="ce()">=</button>
+            </div>
+          </div>
+          <div class="constants-panel">
+            <div class="constants-title">⊕ Constantes físicas</div>
+            <div class="constant-item" onclick="cf('2.99792458e8')"><div class="const-symbol">c</div><div class="const-name">Velocidad de la luz</div><div class="const-val">2.998×10⁸ m/s</div></div>
+            <div class="constant-item" onclick="cf('6.626e-34')"><div class="const-symbol">h</div><div class="const-name">Planck</div><div class="const-val">6.626×10⁻³⁴ J·s</div></div>
+            <div class="constant-item" onclick="cf('1.055e-34')"><div class="const-symbol">ℏ</div><div class="const-name">Planck reducida</div><div class="const-val">1.055×10⁻³⁴ J·s</div></div>
+            <div class="constant-item" onclick="cf('6.674e-11')"><div class="const-symbol">G</div><div class="const-name">Gravitación</div><div class="const-val">6.674×10⁻¹¹ N·m²/kg²</div></div>
+            <div class="constant-item" onclick="cf('9.80665')"><div class="const-symbol">g</div><div class="const-name">Gravedad terrestre</div><div class="const-val">9.806 m/s²</div></div>
+            <div class="constant-item" onclick="cf('1.602e-19')"><div class="const-symbol">e</div><div class="const-name">Carga electrón</div><div class="const-val">1.602×10⁻¹⁹ C</div></div>
+            <div class="constant-item" onclick="cf('9.109e-31')"><div class="const-symbol">mₑ</div><div class="const-name">Masa electrón</div><div class="const-val">9.109×10⁻³¹ kg</div></div>
+            <div class="constant-item" onclick="cf('1.38e-23')"><div class="const-symbol">k_B</div><div class="const-name">Boltzmann</div><div class="const-val">1.38×10⁻²³ J/K</div></div>
+            <div class="constant-item" onclick="cf('6.022e23')"><div class="const-symbol">N_A</div><div class="const-name">Avogadro</div><div class="const-val">6.022×10²³ mol⁻¹</div></div>
+            <div class="constant-item" onclick="cf('8.854e-12')"><div class="const-symbol">ε₀</div><div class="const-name">Permitividad vacío</div><div class="const-val">8.854×10⁻¹² F/m</div></div>
+            <div class="constant-item" onclick="cf('1.257e-6')"><div class="const-symbol">μ₀</div><div class="const-name">Permeabilidad vacío</div><div class="const-val">1.257×10⁻⁶ H/m</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- THEOREMS -->
+      <div class="panel" id="panel-theorems">
+        <div class="panel-title">// teoremas_y_ecuaciones</div>
+        <div class="search-bar" style="margin-bottom:1rem;"><span style="color:var(--muted);">⌕</span><input class="search-input" placeholder="Buscar teorema, ecuación, área..." oninput="filterT(this.value)"></div>
+        <div class="theorems-grid" id="tgrid"></div>
+      </div>
+
+      <!-- CONSTANTS -->
+      <div class="panel" id="panel-constants">
+        <div class="panel-title">// constantes_físicas</div>
+        <div class="panel-sub" style="margin-bottom:1rem;">Clic en cualquier tarjeta para copiar el valor numérico</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;">
+          <div class="theorem-card" onclick="copyConst('2.99792458e8','c')"><div class="theorem-header"><div class="theorem-name">c — Velocidad de la luz</div><div class="theorem-area">Relatividad</div></div><div class="theorem-eq">2.99792458 × 10⁸ m/s</div><div class="theorem-desc">Límite absoluto de velocidad en el universo. Aparece en E = mc² y en todas las ecuaciones de Maxwell.</div></div>
+          <div class="theorem-card" onclick="copyConst('6.626e-34','h')"><div class="theorem-header"><div class="theorem-name">h — Constante de Planck</div><div class="theorem-area">Cuántica</div></div><div class="theorem-eq">6.626 × 10⁻³⁴ J·s</div><div class="theorem-desc">Cuanto mínimo de acción. E = hν relaciona la energía de un fotón con su frecuencia.</div></div>
+          <div class="theorem-card" onclick="copyConst('1.055e-34','ℏ')"><div class="theorem-header"><div class="theorem-name">ℏ — Planck reducida</div><div class="theorem-area">Cuántica</div></div><div class="theorem-eq">1.0545718 × 10⁻³⁴ J·s</div><div class="theorem-desc">ℏ = h/2π. Aparece en Schrödinger, el principio de incertidumbre y la mecánica cuántica relativista.</div></div>
+          <div class="theorem-card" onclick="copyConst('6.674e-11','G')"><div class="theorem-header"><div class="theorem-name">G — Gravitación universal</div><div class="theorem-area">Gravitación</div></div><div class="theorem-eq">6.674 × 10⁻¹¹ N·m²·kg⁻²</div><div class="theorem-desc">Constante en la ley de Newton y en las ecuaciones de campo de Einstein.</div></div>
+          <div class="theorem-card" onclick="copyConst('9.80665','g')"><div class="theorem-header"><div class="theorem-name">g — Gravedad estándar</div><div class="theorem-area">Mecánica</div></div><div class="theorem-eq">9.80665 m/s²</div><div class="theorem-desc">Aceleración gravitacional en la superficie terrestre. Valor convencional internacional.</div></div>
+          <div class="theorem-card" onclick="copyConst('1.602e-19','e')"><div class="theorem-header"><div class="theorem-name">e — Carga del electrón</div><div class="theorem-area">E&amp;M</div></div><div class="theorem-eq">1.60217663 × 10⁻¹⁹ C</div><div class="theorem-desc">Carga eléctrica elemental. Define el culombio en el SI desde 2019.</div></div>
+          <div class="theorem-card" onclick="copyConst('9.109e-31','mₑ')"><div class="theorem-header"><div class="theorem-name">mₑ — Masa del electrón</div><div class="theorem-area">Partículas</div></div><div class="theorem-eq">9.1093837 × 10⁻³¹ kg</div><div class="theorem-desc">Masa en reposo del electrón. Equivalente en energía: 0.511 MeV/c².</div></div>
+          <div class="theorem-card" onclick="copyConst('1.38e-23','k_B')"><div class="theorem-header"><div class="theorem-name">k_B — Boltzmann</div><div class="theorem-area">Termodinámica</div></div><div class="theorem-eq">1.380649 × 10⁻²³ J/K</div><div class="theorem-desc">Relaciona energía cinética media con temperatura. Aparece en S = k_B ln(Ω).</div></div>
+          <div class="theorem-card" onclick="copyConst('6.022e23','N_A')"><div class="theorem-header"><div class="theorem-name">N_A — Avogadro</div><div class="theorem-area">Termodinámica</div></div><div class="theorem-eq">6.02214076 × 10²³ mol⁻¹</div><div class="theorem-desc">Número de entidades en un mol. Define el mol en el SI desde 2019.</div></div>
+          <div class="theorem-card" onclick="copyConst('8.314','R')"><div class="theorem-header"><div class="theorem-name">R — Gas ideal</div><div class="theorem-area">Termodinámica</div></div><div class="theorem-eq">8.314462 J·mol⁻¹·K⁻¹</div><div class="theorem-desc">R = N_A · k_B. Aparece en PV = nRT.</div></div>
+          <div class="theorem-card" onclick="copyConst('5.67e-8','σ')"><div class="theorem-header"><div class="theorem-name">σ — Stefan-Boltzmann</div><div class="theorem-area">Termodinámica</div></div><div class="theorem-eq">5.670374 × 10⁻⁸ W·m⁻²·K⁻⁴</div><div class="theorem-desc">Potencia radiada por unidad de área: P = σT⁴.</div></div>
+          <div class="theorem-card" onclick="copyConst('8.854e-12','ε₀')"><div class="theorem-header"><div class="theorem-name">ε₀ — Permitividad del vacío</div><div class="theorem-area">E&amp;M</div></div><div class="theorem-eq">8.8541878 × 10⁻¹² F/m</div><div class="theorem-desc">Constante eléctrica. Relacionada con c por: c² = 1/(ε₀μ₀).</div></div>
+        </div>
+      </div>
+
+      <!-- MESSAGES -->
+      <div class="panel" id="panel-messages" style="padding:1rem;gap:1rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="panel-title">// mensajes</div>
+          <div id="requests-badge" style="display:none;font-size:11px;color:#fc8181;cursor:pointer;border:1px solid rgba(252,129,129,0.3);padding:4px 10px;border-radius:6px;" onclick="showRequests()">● Solicitudes pendientes</div>
+        </div>
+        <!-- Requests view -->
+        <div id="requests-view" style="display:none;flex-direction:column;gap:1rem;"></div>
+        <!-- Conversations view -->
+        <div id="conversations-view" style="display:flex;flex:1;min-height:500px;border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+          <div class="conv-list" id="conv-list" style="width:260px;flex-shrink:0;">
+            <div class="loading-msg" style="padding:1rem;">// cargando...</div>
+          </div>
+          <div class="chat-area" id="chat-area" style="flex:1;display:flex;flex-direction:column;">
+            <div class="chat-empty">// selecciona una conversación</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div class="panel" id="panel-profile">
+        <div class="panel-title">// mi_perfil</div>
+        <div class="profile-card">
+          <div class="profile-top">
+            <div class="profile-avatar-wrap">
+              <div class="profile-avatar-lg" id="profile-avatar-lg"><span id="profile-initials-lg">?</span></div>
+              <div class="profile-change-avatar" onclick="document.getElementById('profile-avatar-file').click()">✎</div>
+            </div>
+            <input type="file" id="profile-avatar-file" accept="image/*" style="display:none" onchange="changeProfileAvatar(this)">
+            <div>
+              <div class="profile-name-big" id="profile-fullname">—</div>
+              <div class="profile-handle" id="profile-handle">—</div>
+              <div class="profile-rama" id="profile-rama-badge" style="display:none;"></div>
+              <div class="profile-stats"><div class="pstat"><div class="pstat-val" id="profile-posts">0</div><div class="pstat-label">posts</div></div></div>
+            </div>
+          </div>
+          <div class="profile-details">
+            <div class="profile-detail-item"><div class="profile-detail-label">Email</div><div class="profile-detail-val" id="pd-email">—</div></div>
+            <div class="profile-detail-item"><div class="profile-detail-label">Fecha de nacimiento</div><div class="profile-detail-val" id="pd-fecha">—</div></div>
+            <div class="profile-detail-item"><div class="profile-detail-label">Rama preferida</div><div class="profile-detail-val" id="pd-rama">—</div></div>
+            <div class="profile-detail-item"><div class="profile-detail-label">Miembro desde</div><div class="profile-detail-val" id="pd-since">—</div></div>
+          </div>
+          <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border);">
+            <button class="btn-primary" onclick="openEditProfile()">✎ Editar perfil</button>
+          </div>
+        </div>
+
+        <!-- EDIT FORM -->
+        <div id="edit-profile-box" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+            <div style="font-family:var(--mono);font-size:13px;color:var(--accent);">// editar_perfil</div>
+            <button onclick="closeEditProfile()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;">×</button>
+          </div>
+          <div class="avatar-upload" style="margin-bottom:1.25rem;">
+            <div class="avatar-preview" id="edit-avatar-preview" onclick="document.getElementById('edit-avatar-file').click()"><span id="edit-avatar-initials">?</span></div>
+            <input type="file" id="edit-avatar-file" accept="image/*" style="display:none" onchange="previewEditAvatar(this)">
+            <div><div style="font-size:12px;color:var(--muted);">Foto de perfil</div><span class="avatar-upload-btn" onclick="document.getElementById('edit-avatar-file').click()">Cambiar foto</span></div>
+          </div>
+          <div class="auth-grid">
+            <div class="auth-field"><label class="auth-label">Nombre</label><input class="auth-input" type="text" id="edit-nombre"></div>
+            <div class="auth-field"><label class="auth-label">Apellido</label><input class="auth-input" type="text" id="edit-apellido"></div>
+            <div class="auth-field auth-field-full"><label class="auth-label">Nombre de usuario</label><input class="auth-input" type="text" id="edit-username"></div>
+            <div class="auth-field auth-field-full"><label class="auth-label">Fecha de nacimiento</label><input class="auth-input" type="date" id="edit-fecha" style="color-scheme:dark;"></div>
+            <div class="auth-field auth-field-full"><label class="auth-label">Rama de la física preferida</label>
+              <select class="auth-select" id="edit-rama"><option value="" disabled>Selecciona...</option><option>Mecánica Clásica</option><option>Mecánica Estadística</option><option>Termodinámica</option><option>Electromagnetismo</option><option>Óptica</option><option>Acústica</option><option>Mecánica Cuántica</option><option>Física Cuántica de Campos</option><option>Relatividad Especial</option><option>Relatividad General</option><option>Física Nuclear</option><option>Física de Partículas</option><option>Astrofísica</option><option>Cosmología</option><option>Física del Estado Sólido</option><option>Física de Plasma</option><option>Física Atómica y Molecular</option><option>Biofísica</option><option>Física Computacional</option><option>Física Matemática</option><option>Enseñanza de la Física</option><option>Divulgación Científica</option></select>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:0.5rem;">
+            <button class="auth-btn" id="edit-save-btn" onclick="saveEditProfile()" style="flex:1;">Guardar cambios</button>
+            <button onclick="closeEditProfile()" style="flex:0 0 auto;background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--sans);font-size:13px;padding:11px 18px;border-radius:8px;cursor:pointer;">Cancelar</button>
+          </div>
+          <div class="auth-error" id="edit-error"></div>
+        </div>
+      </div>
+
+      <!-- ADMIN PANEL -->
+      <div class="panel" id="panel-admin" style="overflow-y:auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-family:Space Mono,monospace;font-size:14px;color:#fc8181;">⚙ // admin_panel</div>
+          <div style="font-size:11px;color:#718096;">Solo visible para administradores</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div style="background:#111827;border:1px solid rgba(99,179,237,0.15);border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:8px;flex:1;">
+            <span style="color:#718096;font-size:13px;">⌕</span>
+            <input id="admin-search" style="background:none;border:none;color:#e2e8f0;font-family:DM Sans,sans-serif;font-size:13px;outline:none;flex:1;" placeholder="Buscar por nombre, usuario o email..." oninput="adminFilter(this.value)">
+          </div>
+          <button onclick="loadAdminUsers()" style="background:none;border:1px solid rgba(99,179,237,0.2);color:#63b3ed;font-family:DM Sans,sans-serif;font-size:12px;padding:8px 14px;border-radius:8px;cursor:pointer;">↺ Recargar</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 0;border-bottom:1px solid rgba(99,179,237,0.15);">
+          <div style="background:#1a2235;border-radius:8px;padding:12px;text-align:center;"><div style="font-family:Space Mono,monospace;font-size:22px;color:#63b3ed;font-weight:700;" id="stat-users">—</div><div style="font-size:10px;color:#718096;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">usuarios</div></div>
+          <div style="background:#1a2235;border-radius:8px;padding:12px;text-align:center;"><div style="font-family:Space Mono,monospace;font-size:22px;color:#68d391;font-weight:700;" id="stat-posts">—</div><div style="font-size:10px;color:#718096;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">posts</div></div>
+          <div style="background:#1a2235;border-radius:8px;padding:12px;text-align:center;"><div style="font-family:Space Mono,monospace;font-size:22px;color:#f6ad55;font-weight:700;" id="stat-msgs">—</div><div style="font-size:10px;color:#718096;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">mensajes</div></div>
+        </div>
+        <div id="admin-users-list" style="display:flex;flex-direction:column;gap:10px;">
+          <div style="font-family:Space Mono,monospace;font-size:12px;color:#718096;">// cargando usuarios...</div>
+        </div>
+      </div>
+
+      <!-- NEWS -->
+      <div class="panel active" id="panel-news">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="panel-title">// noticias</div>
+          <button onclick="loadNews(true)" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--sans);font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;">↺ Actualizar</button>
+        </div>
+        <div id="news-container">
+          <div class="loading-msg">// cargando noticias...</div>
+        </div>
+      </div>
+
+      <!-- GAMES -->
+      <div class="panel" id="panel-games">
+        <div class="panel-title">🎮 // juegos</div>
+        <div class="panel-sub">Juegos para físicos y curiosos — más próximamente</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-top:0.5rem;">
+
+          <!-- Tetris -->
+          <div class="theorem-card" onclick="launchTetris()" style="text-align:center;padding:2rem 1rem;cursor:pointer;">
+            <div style="font-size:48px;margin-bottom:12px;">🟦</div>
+            <div style="font-family:var(--mono);font-size:14px;color:var(--accent);margin-bottom:6px;">Tetris</div>
+            <div style="font-size:12px;color:var(--muted);">El clásico de bloques</div>
+            <div style="margin-top:12px;">
+              <span style="background:rgba(99,179,237,0.1);color:var(--accent);border:1px solid rgba(99,179,237,0.2);font-size:11px;padding:4px 12px;border-radius:6px;">▶ Jugar</span>
+            </div>
+          </div>
+
+          <!-- Próximamente -->
+          <div class="theorem-card" style="text-align:center;padding:2rem 1rem;opacity:0.5;">
+            <div style="font-size:48px;margin-bottom:12px;">🔬</div>
+            <div style="font-family:var(--mono);font-size:14px;color:var(--muted);margin-bottom:6px;">Próximamente</div>
+            <div style="font-size:12px;color:var(--muted);">Más juegos en camino</div>
+          </div>
+
+        </div>
+
+        <!-- Tetris Game Area -->
+        <div id="tetris-container" style="display:none;margin-top:1rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+            <div style="font-family:var(--mono);font-size:13px;color:var(--accent);">// tetris</div>
+            <div style="display:flex;gap:8px;">
+              <button onclick="tetrisTogglePause()" id="tetris-pause-btn" style="background:rgba(246,173,85,0.1);color:var(--accent3);border:1px solid rgba(246,173,85,0.3);font-family:var(--sans);font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;">⏸ Pausa</button>
+              <button onclick="tetrisInit()" style="background:rgba(104,211,145,0.1);color:var(--accent2);border:1px solid rgba(104,211,145,0.3);font-family:var(--sans);font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;">↺ Reiniciar</button>
+              <button onclick="closeTetris()" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--sans);font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;">✕ Cerrar</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:1.5rem;align-items:flex-start;">
+            <canvas id="tetris-canvas" width="240" height="480" style="border:2px solid var(--border);border-radius:6px;background:#0a0e1a;display:block;"></canvas>
+            <div style="min-width:120px;">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem;">
+                <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;font-family:var(--mono);">Score</div>
+                <div id="tetris-score" style="font-family:var(--mono);font-size:22px;color:var(--accent);font-weight:700;">0</div>
+              </div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem;">
+                <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;font-family:var(--mono);">Nivel</div>
+                <div id="tetris-level" style="font-family:var(--mono);font-size:22px;color:var(--accent2);font-weight:700;">1</div>
+              </div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem;">
+                <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-family:var(--mono);">Siguiente</div>
+                <canvas id="tetris-next" width="80" height="80" style="background:var(--surface2);border-radius:4px;display:block;"></canvas>
+              </div>
+              <div style="font-size:10px;color:var(--muted);line-height:1.8;font-family:var(--mono);">
+                ← → Mover<br>↑ Rotar<br>↓ Bajar<br>Space Drop
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS -->
+      <div class="panel" id="panel-notifications">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="panel-title">🔔 // notificaciones</div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="markAllNotifRead()" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--sans);font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;">✓ Marcar todas leídas</button>
+            <button onclick="deleteAllNotif()" style="background:none;border:1px solid rgba(252,129,129,0.3);color:#fc8181;font-family:var(--sans);font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;">🗑 Borrar todas</button>
+          </div>
+        </div>
+        <div id="notif-container"><div class="loading-msg">// cargando...</div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- CONFIRM MODAL -->
+<div id="confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:#111827;border:1px solid rgba(252,129,129,0.4);border-radius:14px;padding:2rem;width:380px;max-width:100%;">
+    <div style="font-family:Space Mono,monospace;font-size:14px;color:#fc8181;margin-bottom:1rem;">⚠ Confirmar acción</div>
+    <div id="confirm-msg" style="font-size:13px;color:#e2e8f0;margin-bottom:1.5rem;line-height:1.6;"></div>
+    <div style="display:flex;gap:10px;">
+      <button id="confirm-ok" style="flex:1;background:#fc8181;color:#0a0e1a;border:none;font-family:DM Sans,sans-serif;font-size:13px;font-weight:600;padding:10px;border-radius:8px;cursor:pointer;">Confirmar</button>
+      <button onclick="closeConfirm()" style="flex:1;background:none;border:1px solid rgba(99,179,237,0.2);color:#718096;font-family:DM Sans,sans-serif;font-size:13px;padding:10px;border-radius:8px;cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPA_URL = 'https://uakivnmsstqlpcocrldh.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2l2bm1zc3RxbHBjb2NybGRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMTI0MDAsImV4cCI6MjA5MTU4ODQwMH0.BtwLG023iQW2JbPrjLUQNie0_S0ml8cxFPo66w262Is';
+// En modo libre no dependemos de Supabase: si el CDN falla, la app sigue funcionando.
+var sb = null;
+try { sb = supabase.createClient(SUPA_URL, SUPA_KEY); } catch (e) { console.log('Supabase no disponible (modo libre):', e.message); }
+
+var currentUser = null, currentProfile = null, regAvatarFile = null, editAvatarFile = null;
+var activeChatUserId = null, activeChatUsername = null;
+var sendMsgTargetId = null, sendMsgTargetUsername = null;
+var profileCache = {};
+
+// ── UTILS ─────────────────────────────────────────
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showToast(msg, isError) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = isError ? 'error' : '';
+  t.style.display = 'block';
+  setTimeout(function(){ t.style.display = 'none'; }, 2500);
+}
+function showPanel(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id === 'messages') { loadConversations(); checkPendingRequests(); }
+  if (id === 'admin') { loadAdminUsers(); }
+  if (id === 'news' && !newsLoaded) { loadNews(); }
+  if (id === 'notifications') { loadNotifications(); }
+  if (id === 'search') { setTimeout(function(){ var i=document.getElementById('search-panel-input'); if(i) i.focus(); }, 50); }
+  if (id === 'feed' && !arguments[2]) { loadPosts(currentAreaFilter); }
+}
+async function getProfile(username) {
+  if (profileCache[username]) return profileCache[username];
+  var { data } = await sb.from('profiles').select('*').eq('username', username).single();
+  if (data) profileCache[username] = data;
+  return data;
+}
+
+// ── AUTH ──────────────────────────────────────────
+function switchAuthTab(tab, btn) {
+  document.querySelectorAll('.auth-tab').forEach(function(t){ t.classList.remove('active'); });
+  if (btn) { btn.classList.add('active'); }
+  else {
+    document.querySelectorAll('.auth-tab').forEach(function(t){
+      if ((tab==='login' && t.textContent.includes('sesi')) || (tab==='register' && t.textContent.includes('Registr'))) t.classList.add('active');
+    });
+  }
+  document.getElementById('auth-login').style.display = tab==='login' ? 'block' : 'none';
+  document.getElementById('auth-register').style.display = tab==='register' ? 'block' : 'none';
+}
+function previewAvatar(input) {
+  if (!input.files || !input.files[0]) return;
+  regAvatarFile = input.files[0];
+  var r = new FileReader();
+  r.onload = function(e) { document.getElementById('reg-avatar-preview').innerHTML = '<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'; };
+  r.readAsDataURL(regAvatarFile);
+}
+function updateAvatarInitials() {
+  var u = document.getElementById('reg-username').value;
+  var el = document.getElementById('reg-avatar-initials');
+  if (el) el.textContent = u ? u.slice(0,2).toUpperCase() : '+';
+}
+async function doLogin() {
+  var email = document.getElementById('login-email').value.trim();
+  var pass  = document.getElementById('login-pass').value;
+  document.getElementById('login-error').textContent = '';
+  if (!email || !pass) { document.getElementById('login-error').textContent = 'Completa todos los campos.'; return; }
+  var { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) { document.getElementById('login-error').textContent = error.message; return; }
+  await initApp(data.user);
+}
+async function doRegister() {
+  var nombre=document.getElementById('reg-nombre').value.trim(), apellido=document.getElementById('reg-apellido').value.trim();
+  var username=document.getElementById('reg-username').value.trim(), email=document.getElementById('reg-email').value.trim();
+  var pass=document.getElementById('reg-pass').value, fecha=document.getElementById('reg-fecha').value;
+  var rama=document.getElementById('reg-rama').value;
+  document.getElementById('reg-error').textContent = ''; document.getElementById('reg-msg').textContent = '';
+  if (!nombre||!apellido||!username||!email||!pass||!rama) { document.getElementById('reg-error').textContent='Completa todos los campos obligatorios.'; return; }
+  if (pass.length<6) { document.getElementById('reg-error').textContent='Mínimo 6 caracteres.'; return; }
+  var btn=document.getElementById('reg-btn'); btn.disabled=true; btn.textContent='Creando...';
+  var { data, error } = await sb.auth.signUp({ email, password: pass, options:{ data:{ username, nombre, apellido } } });
+  if (error) { document.getElementById('reg-error').textContent=error.message; btn.disabled=false; btn.textContent='Crear cuenta'; return; }
+  var uid = data.user.id;
+  var avatarUrl = null;
+  if (regAvatarFile) {
+    var ext=regAvatarFile.name.split('.').pop(), path=uid+'/avatar.'+ext;
+    var { error:upErr } = await sb.storage.from('avatars').upload(path, regAvatarFile, { upsert:true });
+    if (!upErr) { var { data:ud } = sb.storage.from('avatars').getPublicUrl(path); avatarUrl=ud.publicUrl; }
+  }
+  var { error:profErr } = await sb.from('profiles').insert({ id:uid, username, nombre, apellido, fecha_nac:fecha||null, rama_fisica:rama, avatar_url:avatarUrl });
+  btn.disabled=false; btn.textContent='Crear cuenta';
+  if (profErr) document.getElementById('reg-error').textContent='Cuenta creada pero error en perfil: '+profErr.message;
+  else document.getElementById('reg-msg').textContent='✓ Cuenta creada. Inicia sesión.';
+}
+async function doLogout() {
+  await sb.auth.signOut(); currentUser=null; currentProfile=null;
+  document.getElementById('main-app').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+}
+async function initApp(user) {
+  currentUser = user;
+  var { data:prof } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  currentProfile = prof;
+  var username = prof?.username || user.user_metadata?.username || user.email.split('@')[0];
+  var initials = username.slice(0,2).toUpperCase();
+  var navAv = document.getElementById('nav-avatar');
+  navAv.innerHTML = prof?.avatar_url ? '<img src="'+prof.avatar_url+'">' : '<span>'+initials+'</span>';
+  document.getElementById('nav-username').textContent = username;
+  var profAvLg = document.getElementById('profile-avatar-lg');
+  profAvLg.innerHTML = prof?.avatar_url ? '<img src="'+prof.avatar_url+'">' : '<span id="profile-initials-lg">'+initials+'</span>';
+  var fullname = prof ? (prof.nombre+' '+prof.apellido).trim() : username;
+  document.getElementById('profile-fullname').textContent = fullname || username;
+  document.getElementById('profile-handle').textContent = '@'+username+' · '+user.email;
+  var rb = document.getElementById('profile-rama-badge');
+  if (prof?.rama_fisica) { rb.textContent=prof.rama_fisica; rb.style.display='inline-block'; }
+  document.getElementById('pd-email').textContent = user.email;
+  document.getElementById('pd-fecha').textContent = prof?.fecha_nac ? new Date(prof.fecha_nac+'T00:00:00').toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'}) : '—';
+  document.getElementById('pd-rama').textContent = prof?.rama_fisica || '—';
+  document.getElementById('pd-since').textContent = new Date(user.created_at).toLocaleDateString('es',{month:'long',year:'numeric'});
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('landing').style.display='none';
+  document.getElementById('main-app').style.display='flex';
+  loadPosts();
+  checkPendingRequests();
+  checkAdmin();
+  checkNotifUnread();
+  subscribeNotifications();
+  if (window._pendingSearch) {
+    var q = window._pendingSearch; window._pendingSearch = null;
+    showPanel('search', document.querySelector('.nav-tab[onclick*="search"]'));
+    setTimeout(function(){
+      var inp = document.getElementById('search-panel-input');
+      if (inp) { inp.value = q; panelSearchUsers(q); }
+    }, 200);
+  }
+}
+// ── MODO LIBRE (sin cuenta) ───────────────────────
+// Login/registro, feed, chat, búsqueda, perfil y notificaciones en stand by.
+// Para reactivar: quitar la clase "standby" en el HTML y restaurar el
+// bloque sb.auth.getSession() original que llamaba a initApp().
+document.getElementById('landing').style.display='flex';
+document.getElementById('auth-screen').style.display='none';
+setTimeout(landingInit, 0); // diferido: las variables del landing se definen más abajo
+
+function enterApp() {
+  if (lndBgTimer) clearInterval(lndBgTimer);
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'flex';
+  showPanel('news', document.querySelector('.nav-tab[onclick*="\'news\'"]'));
+}
+
+// ══════════════════════════════════════════════════
+//  LANDING PAGE LOGIC
+// ══════════════════════════════════════════════════
+var lndArticles = [];
+var lndCurrentIdx = 0;
+var lndBgTimer = null;
+
+// Unsplash science/space keyword images (no API key needed)
+var lndBgKeywords = [
+  'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=1600&q=80', // space
+  'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1600&q=80', // galaxy
+  'https://images.unsplash.com/photo-1517976487492-5750f3195933?w=1600&q=80', // physics lab
+  'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1600&q=80', // particle
+  'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=1600&q=80', // moon
+  'https://images.unsplash.com/photo-1484589065579-248aad0d8b13?w=1600&q=80', // nebula
+  'https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=1600&q=80', // universe
+  'https://images.unsplash.com/photo-1608178398319-48f814d0750c?w=1600&q=80', // atom
+];
+
+async function landingInit() {
+  // Set initial random bg
+  setLandingBg(lndBgKeywords[Math.floor(Math.random() * lndBgKeywords.length)]);
+  // Fetch news via Claude API
+  await landingFetchNews();
+}
+
+function setLandingBg(url) {
+  var bg = document.getElementById('lnd-hero-bg');
+  // Preload
+  var img = new Image();
+  img.onload = function() {
+    bg.style.backgroundImage = 'url(' + url + ')';
+  };
+  img.src = url;
+}
+
+async function landingFetchNews() {
+  var n;
+  try { n = await fetchNewsSources(); } catch (e) { n = { mixed: [] }; }
+  lndArticles = (n.mixed || []).slice(0, 12).map(function(it) {
+    return { title: it.title, description: it.desc, source: it.source, url: it.link, color: it.color };
+  });
+  if (lndArticles.length > 0) {
+    landingPopulateHero();
+    landingPopulateTicker();
+    landingPopulateGrid();
+    lndBgTimer = setInterval(landingRotateHero, 8000);
+  } else {
+    // Sin noticias: se queda el texto de bienvenida del hero, sin inventar titulares
+    document.getElementById('lnd-source-label').textContent = '// noticias no disponibles ahora mismo';
+    document.getElementById('lnd-ticker').innerHTML = '<span class="lnd-news-item"><span class="lnd-news-dot"></span>Noticias no disponibles ahora mismo — vuelve en un rato</span>';
+    landingPopulateGrid();
+  }
+}
+
+function landingPopulateHero() {
+  if (!lndArticles.length) return;
+  var art = lndArticles[lndCurrentIdx];
+  var bgIdx = lndCurrentIdx % lndBgKeywords.length;
+  setLandingBg(lndBgKeywords[bgIdx]);
+
+  var headline = document.getElementById('lnd-headline');
+  var tagline  = document.getElementById('lnd-tagline');
+  var srcLabel = document.getElementById('lnd-source-label');
+
+  // Animate out
+  var hc = document.getElementById('lnd-hero-content');
+  hc.style.opacity = '0'; hc.style.transform = 'translateY(16px)';
+  setTimeout(function() {
+    // Truncate title for headline: split at comma or em-dash
+    var title = art.title;
+    var parts = title.split(/[,—:]/);
+    var h1 = parts[0].trim();
+    var h2 = parts.slice(1).join('').trim();
+    if (h2) {
+      headline.innerHTML = escHtml(h1) + ',<br><em>' + escHtml(h2) + '</em>';
+    } else {
+      // Split roughly in half
+      var words = h1.split(' ');
+      var mid = Math.floor(words.length / 2);
+      headline.innerHTML = escHtml(words.slice(0, mid).join(' ')) + '<br><em>' + escHtml(words.slice(mid).join(' ')) + '</em>';
+    }
+    tagline.textContent = art.description;
+    srcLabel.textContent = '// ' + art.source + ' · última hora';
+    hc.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    hc.style.opacity = '1'; hc.style.transform = 'translateY(0)';
+  }, 300);
+}
+
+function landingRotateHero() {
+  lndCurrentIdx = (lndCurrentIdx + 1) % lndArticles.length;
+  landingPopulateHero();
+}
+
+function landingPopulateTicker() {
+  if (!lndArticles.length) return;
+  var items = lndArticles.concat(lndArticles); // duplicate for seamless loop
+  var html = items.map(function(a) {
+    return '<span class="lnd-news-item" onclick="landingScrollNews()"><span class="lnd-news-dot"></span><span class="lnd-news-src" style="color:' + (a.color || 'var(--accent3)') + '">' + escHtml(a.source) + '</span>' + escHtml(a.title) + '</span>';
+  }).join('');
+  document.getElementById('lnd-ticker').innerHTML = html;
+}
+
+function landingPopulateGrid() {
+  var grid = document.getElementById('lnd-news-grid');
+  if (!lndArticles.length) { grid.innerHTML = '<div style="color:var(--muted);font-size:12px;font-family:var(--mono);">// sin noticias disponibles</div>'; return; }
+  grid.innerHTML = '';
+  lndArticles.forEach(function(a) {
+    var card = document.createElement('div');
+    card.className = 'lnd-news-card';
+    card.onclick = function(){ if (a.url) window.open(a.url, '_blank', 'noopener'); };
+    card.innerHTML =
+      '<div class="lnc-source" style="color:' + (a.color || 'var(--accent3)') + '">' + escHtml(a.source) + '</div>' +
+      '<div class="lnc-title">' + escHtml(a.title) + '</div>' +
+      '<div class="lnc-desc">' + escHtml(a.description || '') + '</div>';
+    grid.appendChild(card);
+  });
+}
+
+function landingScrollNews() {
+  document.getElementById('lnd-news-panel').classList.add('open');
+}
+function landingCloseNews() {
+  document.getElementById('lnd-news-panel').classList.remove('open');
+}
+
+function landingGoLogin() {
+  if (lndBgTimer) clearInterval(lndBgTimer);
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  switchAuthTab('login', null);
+}
+function landingGoRegister() {
+  if (lndBgTimer) clearInterval(lndBgTimer);
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  switchAuthTab('register', null);
+}
+function landingSearchUser() {
+  var q = document.getElementById('lnd-user-search').value.trim();
+  if (!q) { landingGoLogin(); return; }
+  window._pendingSearch = q;
+  landingGoLogin();
+}
+// Close news panel on ESC
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') landingCloseNews();
+});
+
+// ── FEED ──────────────────────────────────────────
+var currentAreaFilter = null;
+
+async function loadPosts(areaFilter) {
+  var c = document.getElementById('posts-container');
+  c.innerHTML = '<div class="loading-msg">// cargando posts...</div>';
+
+  var titleEl = document.getElementById('feed-title');
+  var badgeEl = document.getElementById('feed-filter-badge');
+
+  if (areaFilter) {
+    if (titleEl) titleEl.textContent = '// feed · ' + areaFilter.label.replace(/^\S+\s/,'').toLowerCase();
+    if (badgeEl) { badgeEl.style.display='inline-flex'; badgeEl.querySelector('span').textContent = areaFilter.label; }
+  } else {
+    if (titleEl) titleEl.textContent = '// feed_principal';
+    if (badgeEl) badgeEl.style.display='none';
+  }
+
+  var { data, error } = await sb.from('posts').select('*').order('created_at',{ascending:false}).limit(100);
+  if (error) { c.innerHTML='<div class="loading-msg">// error: '+error.message+'</div>'; return; }
+  if (!data||!data.length) { c.innerHTML='<div class="loading-msg">// no hay posts todavía. ¡Sé el primero!</div>'; return; }
+
+  // Si hay filtro, aplicar
+  var filtered = data;
+  if (areaFilter) {
+    var kws = areaFilter.keywords;
+    var ramaKws = areaFilter.ramas;
+    // Cargar perfiles para filtrar por rama (usamos cache)
+    var filtered2 = [];
+    for (var p of data) {
+      var contentLow = (p.content||'').toLowerCase();
+      var matchContent = kws.some(function(k){ return contentLow.includes(k); });
+      if (matchContent) { filtered2.push(p); continue; }
+      var prof = await getProfile(p.username||'');
+      if (prof && prof.rama_fisica) {
+        var matchRama = ramaKws.some(function(r){ return prof.rama_fisica === r || prof.rama_fisica.toLowerCase().includes(r.toLowerCase()); });
+        if (matchRama) filtered2.push(p);
+      }
+    }
+    filtered = filtered2;
+  }
+
+  c.innerHTML='';
+  if (!filtered.length) {
+    c.innerHTML='<div class="loading-msg">// no hay posts en esta área todavía.</div>';
+    return;
+  }
+  var myCount=0;
+  for (var p of filtered) {
+    if (p.user_id===currentUser?.id) myCount++;
+    c.appendChild(await renderPost(p));
+  }
+  if (!areaFilter) document.getElementById('profile-posts').textContent = myCount;
+}
+
+function toggleAreasMenu() {
+  var menu = document.getElementById('areas-menu');
+  var arrow = document.getElementById('areas-arrow');
+  var open = menu.style.display === 'flex';
+  menu.style.display = open ? 'none' : 'flex';
+  arrow.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+async function filterByArea(id, label, keywords) {
+  // Toggle: si ya está activo, limpiar
+  if (currentAreaFilter && currentAreaFilter.id === id) {
+    clearAreaFilter(); return;
+  }
+  // Mapeo de área a ramas relacionadas en profiles
+  var ramaMap = {
+    clasica:       ['Mecánica Clásica','Mecánica clásica'],
+    estadistica:   ['Mecánica Estadística','Mecánica estadística'],
+    termo:         ['Termodinámica'],
+    em:            ['Electromagnetismo'],
+    optica:        ['Óptica'],
+    acustica:      ['Acústica'],
+    cuantica:      ['Mecánica Cuántica','Mecánica cuántica','Física Cuántica de Campos'],
+    qft:           ['Física Cuántica de Campos'],
+    re:            ['Relatividad Especial'],
+    rg:            ['Relatividad General'],
+    nuclear:       ['Física Nuclear'],
+    particulas:    ['Física de Partículas'],
+    astrofisica:   ['Astrofísica'],
+    cosmologia:    ['Cosmología'],
+    solido:        ['Física del Estado Sólido'],
+    plasma:        ['Física de Plasma'],
+    atomica:       ['Física Atómica y Molecular'],
+    biofisica:     ['Biofísica'],
+    computacional: ['Física Computacional'],
+    matematica:    ['Física Matemática'],
+    ensenanza:     ['Enseñanza de la Física'],
+    divulgacion:   ['Divulgación Científica']
+  };
+  currentAreaFilter = { id, label, keywords, ramas: ramaMap[id]||keywords };
+  // Resaltar sidebar
+  document.querySelectorAll('.sidebar-item[id^="area-"]').forEach(function(el){
+    el.classList.remove('area-active');
+  });
+  var el = document.getElementById('area-'+id);
+  if (el) el.classList.add('area-active');
+  // Ir al feed y cargar filtrado
+  showPanel('feed', document.querySelector('.nav-tab[onclick*="feed"]'));
+  await loadPosts(currentAreaFilter);
+}
+
+function clearAreaFilter() {
+  currentAreaFilter = null;
+  document.querySelectorAll('.sidebar-item[id^="area-"]').forEach(function(el){
+    el.classList.remove('area-active');
+  });
+  loadPosts();
+}
+
+async function renderPost(p) {
+  var username=p.username||'anon', initials=username.slice(0,2).toUpperCase();
+  var date=new Date(p.created_at).toLocaleString('es',{dateStyle:'short',timeStyle:'short'});
+  var prof = await getProfile(username);
+  var isMe = p.user_id === currentUser?.id;
+  var avHtml = prof?.avatar_url
+    ? '<div class="avatar" onclick="'+(isMe?'':'openPubProfile(\''+escHtml(username)+'\')')+'"><img src="'+prof.avatar_url+'"></div>'
+    : '<div class="avatar" onclick="'+(isMe?'':'openPubProfile(\''+escHtml(username)+'\')')+'">'+initials+'</div>';
+  var ramaHtml = prof?.rama_fisica ? '<div class="post-rama">'+escHtml(prof.rama_fisica)+'</div>' : '';
+  var nameClick = isMe ? '' : 'onclick="openPubProfile(\''+escHtml(username)+'\')"';
+  var div=document.createElement('div'); div.className='post-card';
+  div.innerHTML = avHtml +
+    '<div style="flex:1"><div style="display:flex;align-items:center;gap:10px;">'+
+    '<div class="post-name" '+nameClick+'>'+escHtml(username)+'</div>'+
+    '<div class="post-info">'+date+'</div></div>'+ramaHtml+'</div>';
+  var header = document.createElement('div'); header.className='post-header';
+  header.innerHTML = div.innerHTML; div.innerHTML='';
+  div.appendChild(header);
+  div.insertAdjacentHTML('beforeend', formatBody(p.content));
+  var actions = '<div class="post-actions">' +
+    '<button class="post-action">♡ guardar</button>' +
+    '<button class="post-action">↗ compartir</button>';
+  if (isMe) {
+    actions += '<button class="post-action" onclick="deleteOwnPost(\''+p.id+'\')" style="color:#fc8181;margin-left:auto;">🗑 eliminar</button>';
+  }
+  actions += '</div>';
+  div.insertAdjacentHTML('beforeend', actions);
+  return div;
+}
+
+async function deleteOwnPost(postId) {
+  showConfirm('¿Eliminar este post? Esta acción no se puede deshacer.', async function() {
+    var { error } = await sb.from('posts').delete().eq('id', postId).eq('user_id', currentUser.id);
+    if (error) { showToast('Error: '+error.message, true); return; }
+    showToast('✓ Post eliminado');
+    loadPosts();
+  });
+}
+function formatBody(content) {
+  if (!content) return '';
+  // Split by equations first
+  return content.split(/(\[eq\][\s\S]*?\[\/eq\])/g).map(function(p){
+    if (p.startsWith('[eq]')) {
+      return '<div class="post-eq">'+escHtml(p.replace('[eq]','').replace('[/eq]','').trim())+'</div>';
+    }
+    if (!p.trim()) return '';
+    var t = escHtml(p);
+    // Images: ![alt](url)
+    t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img class="post-img" src="$2" alt="$1">');
+    // Links: [text](url)
+    t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    // Bold: **text**
+    t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    // Italic: *text*
+    t = t.replace(/(^|[^*])\*([^*]+)\*/g, '$1<em>$2</em>');
+    // Strikethrough: ~~text~~
+    t = t.replace(/~~([^~]+)~~/g, '<s>$1</s>');
+    // Inline code: `text`
+    t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // Mentions: @username (also after HTML tags)
+    t = t.replace(/(^|[\s>])@(\w+)/g, '$1<span class="mention" onclick="openPubProfile(\'$2\')">@$2</span>');
+    // Hashtags: #tag
+    t = t.replace(/(^|[\s>])#([\wáéíóúñÁÉÍÓÚÑ]+)/g, '$1<span class="hashtag">#$2</span>');
+    // Headings: # line
+    t = t.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    // Block quotes: > line
+    t = t.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+    // Bullet lists: - line
+    var lines = t.split('\n');
+    var out = [], inList = false;
+    lines.forEach(function(ln){
+      if (/^- (.+)/.test(ln)) {
+        if (!inList) { out.push('<ul>'); inList=true; }
+        out.push('<li>' + ln.replace(/^- /,'') + '</li>');
+      } else {
+        if (inList) { out.push('</ul>'); inList=false; }
+        out.push(ln);
+      }
+    });
+    if (inList) out.push('</ul>');
+    t = out.join('\n').replace(/\n{2,}/g,'<br><br>').replace(/\n/g,'<br>');
+    return '<div class="post-body">'+t+'</div>';
+  }).join('');
+}
+
+// ── RICH TEXT TOOLBAR ──────────────────────────────
+function rtWrap(pre, suf) {
+  var t = document.getElementById('compose-text');
+  var s = t.selectionStart, e = t.selectionEnd;
+  var sel = t.value.substring(s,e) || 'texto';
+  t.value = t.value.substring(0,s) + pre + sel + suf + t.value.substring(e);
+  t.focus();
+  t.setSelectionRange(s + pre.length, s + pre.length + sel.length);
+}
+function rtPrefix(pre) {
+  var t = document.getElementById('compose-text');
+  var s = t.selectionStart;
+  var before = t.value.substring(0,s);
+  var lineStart = before.lastIndexOf('\n') + 1;
+  t.value = t.value.substring(0,lineStart) + pre + t.value.substring(lineStart);
+  t.focus();
+  t.setSelectionRange(s + pre.length, s + pre.length);
+}
+function rtHeading() { rtPrefix('### '); }
+function rtLink() {
+  var url = prompt('URL:');
+  if (!url) return;
+  var t = document.getElementById('compose-text');
+  var s = t.selectionStart, e = t.selectionEnd;
+  var sel = t.value.substring(s,e) || 'enlace';
+  t.value = t.value.substring(0,s) + '[' + sel + '](' + url + ')' + t.value.substring(e);
+  t.focus();
+}
+function rtImageUrl() {
+  var url = prompt('URL de la imagen:');
+  if (!url) return;
+  var t = document.getElementById('compose-text');
+  var s = t.selectionStart;
+  t.value = t.value.substring(0,s) + '![imagen](' + url + ')\n' + t.value.substring(s);
+  t.focus();
+}
+async function rtUploadImage(input) {
+  var file = input.files[0];
+  if (!file || !currentUser) return;
+  showToast('Subiendo imagen...');
+  var ext = file.name.split('.').pop();
+  var fname = currentUser.id + '/post_' + Date.now() + '.' + ext;
+  var { data, error } = await sb.storage.from('avatars').upload(fname, file);
+  if (error) { showToast('Error: '+error.message, true); return; }
+  var { data: urlData } = sb.storage.from('avatars').getPublicUrl(fname);
+  var t = document.getElementById('compose-text');
+  var s = t.selectionStart;
+  t.value = t.value.substring(0,s) + '![imagen](' + urlData.publicUrl + ')\n' + t.value.substring(s);
+  input.value = '';
+  showToast('✓ Imagen añadida');
+  t.focus();
+}
+function rtMention() {
+  // Open internal mention picker modal
+  var modal = document.getElementById('mention-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'mention-modal';
+    modal.style.cssText = 'display:flex;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;align-items:center;justify-content:center;padding:1rem;';
+    modal.innerHTML =
+      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;width:400px;max-width:100%;">' +
+        '<div style="font-family:var(--mono);font-size:13px;color:var(--accent);margin-bottom:1rem;">@ Mencionar usuario</div>' +
+        '<input id="mention-search" type="text" placeholder="Buscar por nombre o @usuario..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--sans);font-size:14px;padding:10px 14px;outline:none;margin-bottom:1rem;" autocomplete="off">' +
+        '<div id="mention-results" style="max-height:300px;overflow-y:auto;"></div>' +
+        '<button onclick="closeMentionModal()" style="width:100%;margin-top:1rem;background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--sans);font-size:13px;padding:8px;border-radius:6px;cursor:pointer;">Cancelar</button>' +
+      '</div>';
+    document.body.appendChild(modal);
+    document.getElementById('mention-search').addEventListener('input', debounceSearchUsers);
+  } else {
+    modal.style.display = 'flex';
+  }
+  document.getElementById('mention-search').value = '';
+  document.getElementById('mention-results').innerHTML = '<div style="padding:1rem;text-align:center;color:var(--muted);font-size:12px;">Escribe para buscar usuarios</div>';
+  setTimeout(function(){ document.getElementById('mention-search').focus(); }, 50);
+}
+
+function closeMentionModal() {
+  var m = document.getElementById('mention-modal');
+  if (m) m.style.display = 'none';
+}
+
+var mentionSearchTimer = null;
+function debounceSearchUsers(e) {
+  clearTimeout(mentionSearchTimer);
+  var q = e.target.value.trim().replace(/^@/,'');
+  mentionSearchTimer = setTimeout(function(){ searchUsers(q); }, 200);
+}
+
+async function searchUsers(q) {
+  var results = document.getElementById('mention-results');
+  if (!q || q.length < 1) {
+    results.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--muted);font-size:12px;">Escribe para buscar usuarios</div>';
+    return;
+  }
+  results.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--muted);font-size:12px;">Buscando...</div>';
+  // Search by username or nombre
+  var { data } = await sb.from('profiles').select('id,username,nombre,apellido,avatar_url,rama_fisica')
+    .or('username.ilike.%'+q+'%,nombre.ilike.%'+q+'%,apellido.ilike.%'+q+'%')
+    .limit(10);
+  if (!data || !data.length) {
+    results.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--muted);font-size:12px;">No se encontraron usuarios</div>';
+    return;
+  }
+  results.innerHTML = '';
+  data.forEach(function(u){
+    var item = document.createElement('div');
+    item.style.cssText = 'display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;cursor:pointer;transition:background 0.15s;';
+    item.onmouseenter = function(){ this.style.background='rgba(99,179,237,0.08)'; };
+    item.onmouseleave = function(){ this.style.background='transparent'; };
+    var initials = (u.username||'?').slice(0,2).toUpperCase();
+    var avatarHtml = u.avatar_url
+      ? '<img src="'+u.avatar_url+'" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;">'
+      : '<div style="width:36px;height:36px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;color:var(--accent);flex-shrink:0;">'+initials+'</div>';
+    var fullname = ((u.nombre||'')+' '+(u.apellido||'')).trim();
+    item.innerHTML = avatarHtml +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-size:13px;color:var(--text);font-weight:500;">'+escHtml(fullname || u.username)+'</div>' +
+        '<div style="font-size:11px;color:var(--muted);font-family:var(--mono);">@'+escHtml(u.username)+(u.rama_fisica?' · '+escHtml(u.rama_fisica):'')+'</div>' +
+      '</div>';
+    item.onclick = function(){
+      var t = document.getElementById('compose-text');
+      var s = t.selectionStart;
+      var before = t.value.substring(0,s);
+      // If last char is @ replace it, else insert @username
+      var insert = before.endsWith('@') ? u.username + ' ' : '@' + u.username + ' ';
+      if (before.endsWith('@')) {
+        t.value = t.value.substring(0,s-1) + '@' + u.username + ' ' + t.value.substring(s);
+      } else {
+        t.value = t.value.substring(0,s) + insert + t.value.substring(s);
+      }
+      closeMentionModal();
+      t.focus();
+    };
+    results.appendChild(item);
+  });
+}
+
+// ── PANEL SEARCH ──────────────────────────────────
+var panelSearchTimer = null;
+function panelSearchUsers(q) {
+  clearTimeout(panelSearchTimer);
+  q = q.trim().replace(/^@/,'');
+  var container = document.getElementById('search-panel-results');
+  if (!q) {
+    container.innerHTML = '<div class="search-empty">// escribe para buscar físicos</div>';
+    return;
+  }
+  container.innerHTML = '<div class="search-empty">// buscando...</div>';
+  panelSearchTimer = setTimeout(async function(){
+    var { data } = await sb.from('profiles').select('id,username,nombre,apellido,avatar_url,rama_fisica')
+      .or('username.ilike.%'+q+'%,nombre.ilike.%'+q+'%,apellido.ilike.%'+q+'%')
+      .neq('id', currentUser?.id)
+      .limit(24);
+    if (!data || !data.length) {
+      container.innerHTML = '<div class="search-empty">// no se encontraron usuarios para "'+escHtml(q)+'"</div>';
+      return;
+    }
+    container.innerHTML = '<div class="search-results-grid" id="search-grid"></div>';
+    var grid = document.getElementById('search-grid');
+    data.forEach(function(u){
+      var initials = (u.username||'?').slice(0,2).toUpperCase();
+      var avHtml = u.avatar_url
+        ? '<img src="'+u.avatar_url+'">'
+        : initials;
+      var card = document.createElement('div');
+      card.className = 'user-card';
+      card.innerHTML =
+        '<div class="user-card-avatar">'+avHtml+'</div>' +
+        '<div class="user-card-name">'+escHtml(((u.nombre||'')+' '+(u.apellido||'')).trim() || u.username)+'</div>' +
+        '<div class="user-card-handle">@'+escHtml(u.username)+'</div>' +
+        (u.rama_fisica ? '<div class="user-card-rama">'+escHtml(u.rama_fisica)+'</div>' : '');
+      card.onclick = function(){ openPubProfile(u.username); };
+      grid.appendChild(card);
+    });
+  }, 250);
+}
+
+// ── SIDEBAR SEARCH ────────────────────────────────
+var sidebarSearchTimer = null;
+function sidebarSearchUsers(q) {
+  clearTimeout(sidebarSearchTimer);
+  q = q.trim().replace(/^@/,'');
+  var container = document.getElementById('sidebar-search-results');
+  if (!q) { container.innerHTML = ''; return; }
+  sidebarSearchTimer = setTimeout(async function(){
+    var { data } = await sb.from('profiles').select('id,username,nombre,apellido,avatar_url')
+      .or('username.ilike.%'+q+'%,nombre.ilike.%'+q+'%,apellido.ilike.%'+q+'%')
+      .neq('id', currentUser?.id)
+      .limit(6);
+    container.innerHTML = '';
+    if (!data || !data.length) {
+      container.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:6px 8px;font-family:var(--mono);">// sin resultados</div>';
+      return;
+    }
+    data.forEach(function(u){
+      var initials = (u.username||'?').slice(0,2).toUpperCase();
+      var avHtml = u.avatar_url
+        ? '<img src="'+u.avatar_url+'">'
+        : initials;
+      var item = document.createElement('div');
+      item.className = 'sidebar-user-item';
+      item.innerHTML =
+        '<div class="sidebar-user-av">'+avHtml+'</div>' +
+        '<div class="sidebar-user-info">' +
+          '<div class="sidebar-user-name">'+escHtml(((u.nombre||'')+' '+(u.apellido||'')).trim() || u.username)+'</div>' +
+          '<div class="sidebar-user-handle">@'+escHtml(u.username)+'</div>' +
+        '</div>';
+      item.onclick = function(){ openPubProfile(u.username); };
+      container.appendChild(item);
+    });
+  }, 250);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e){
+  if (document.activeElement?.id !== 'compose-text') return;
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key==='b') { e.preventDefault(); rtWrap('**','**'); }
+    if (e.key==='i') { e.preventDefault(); rtWrap('*','*'); }
+  }
+});
+async function doPost() {
+  var text=document.getElementById('compose-text').value.trim();
+  if (!text||!currentUser) return;
+  var username=currentProfile?.username||currentUser.email.split('@')[0];
+  var { data, error } = await sb.from('posts').insert({ content:text, user_id:currentUser.id, username }).select().single();
+  if (error) { showToast('Error: '+error.message, true); return; }
+  document.getElementById('compose-text').value='';
+  showToast('✓ publicado');
+  // Create notifications for mentioned users
+  if (data) await createMentionNotifs(text, data.id);
+  loadPosts();
+}
+function insertTag(tag) { var t=document.getElementById('compose-text'); t.value+=(t.value?'\n':'')+tag; t.focus(); }
+
+// ── PUBLIC PROFILE ────────────────────────────────
+async function openPubProfile(username) {
+  var prof = await getProfile(username);
+  if (!prof) return;
+  var initials = username.slice(0,2).toUpperCase();
+  var avEl = document.getElementById('pub-av');
+  avEl.innerHTML = prof.avatar_url ? '<img src="'+prof.avatar_url+'" style="width:100%;height:100%;object-fit:cover;">' : initials;
+  document.getElementById('pub-name').textContent = (prof.nombre+' '+prof.apellido).trim() || username;
+  document.getElementById('pub-handle').textContent = '@'+username;
+  var ramaEl=document.getElementById('pub-rama');
+  if (prof.rama_fisica) { ramaEl.textContent=prof.rama_fisica; ramaEl.style.display='inline-block'; } else ramaEl.style.display='none';
+  var { count } = await sb.from('posts').select('*',{count:'exact',head:true}).eq('username',username);
+  document.getElementById('pub-posts').textContent = count||0;
+  var actionsEl = document.getElementById('pub-actions');
+  var isMe = prof.id === currentUser?.id;
+  if (isMe) { actionsEl.innerHTML=''; }
+  else {
+    var { data:req } = await sb.from('message_requests').select('status').eq('from_user_id',currentUser.id).eq('to_user_id',prof.id).single();
+    var { data:accepted } = await sb.from('message_requests').select('status').eq('from_user_id',prof.id).eq('to_user_id',currentUser.id).eq('status','accepted').single();
+    var canMsg = !req && !accepted;
+    var alreadyTalking = req?.status==='accepted' || accepted;
+    var btnMsg = alreadyTalking
+      ? '<button class="btn-primary" onclick="openChat(\''+prof.id+'\',\''+escHtml(username)+'\');closePubProfile();">✉ Abrir chat</button>'
+      : (canMsg ? '<button class="btn-primary" onclick="openSendMsg(\''+prof.id+'\',\''+escHtml(username)+'\');">✉ Enviar mensaje</button>'
+                : '<button class="btn-secondary" disabled style="opacity:0.5;">Solicitud enviada</button>');
+    actionsEl.innerHTML = btnMsg;
+  }
+  document.getElementById('pub-profile-modal').classList.add('open');
+}
+function closePubProfile() { document.getElementById('pub-profile-modal').classList.remove('open'); }
+
+// ── SEND MESSAGE REQUEST ──────────────────────────
+function openSendMsg(userId, username) {
+  sendMsgTargetId=userId; sendMsgTargetUsername=username;
+  document.getElementById('send-msg-to-name').textContent='@'+username;
+  document.getElementById('send-msg-text').value='';
+  document.getElementById('send-msg-error').textContent='';
+  closePubProfile();
+  document.getElementById('send-msg-modal').classList.add('open');
+}
+function closeSendMsg() { document.getElementById('send-msg-modal').classList.remove('open'); }
+async function doSendRequest() {
+  var text=document.getElementById('send-msg-text').value.trim();
+  if (!text) { document.getElementById('send-msg-error').textContent='Escribe un mensaje.'; return; }
+  var { error:reqErr } = await sb.from('message_requests').insert({ from_user_id:currentUser.id, to_user_id:sendMsgTargetId });
+  if (reqErr && !reqErr.message.includes('duplicate')) { document.getElementById('send-msg-error').textContent=reqErr.message; return; }
+  var { error:msgErr } = await sb.from('messages').insert({ from_user_id:currentUser.id, to_user_id:sendMsgTargetId, content:text });
+  if (msgErr) { document.getElementById('send-msg-error').textContent=msgErr.message; return; }
+  closeSendMsg();
+  showToast('✓ Solicitud enviada');
+}
+
+// ── PENDING REQUESTS ──────────────────────────────
+async function checkPendingRequests() {
+  if (!currentUser) return;
+  var { data } = await sb.from('message_requests').select('*').eq('to_user_id',currentUser.id).eq('status','pending');
+  var badge=document.getElementById('requests-badge');
+  var tabMsg=document.getElementById('tab-messages');
+  if (data && data.length>0) {
+    badge.style.display='inline-block';
+    badge.textContent='● '+data.length+' solicitud'+(data.length>1?'es':'')+' pendiente'+(data.length>1?'s':'');
+    tabMsg.classList.add('has-notif');
+  } else {
+    badge.style.display='none';
+    tabMsg.classList.remove('has-notif');
+  }
+}
+async function showRequests() {
+  var rv=document.getElementById('requests-view');
+  var cv=document.getElementById('conversations-view');
+  rv.style.display='flex'; cv.style.display='none';
+  rv.innerHTML='<div class="loading-msg">// cargando solicitudes...</div>';
+  var { data } = await sb.from('message_requests').select('*').eq('to_user_id',currentUser.id).eq('status','pending').order('created_at',{ascending:false});
+  if (!data||!data.length) { rv.innerHTML='<div class="loading-msg">// no hay solicitudes pendientes</div>'; return; }
+  rv.innerHTML='';
+  for (var req of data) {
+    var fromProf = await getProfileById(req.from_user_id);
+    var username = fromProf?.username || "usuario";
+    var initials = username.slice(0,2).toUpperCase();
+    var { data:msgs } = await sb.from('messages').select('content').eq('from_user_id',req.from_user_id).eq('to_user_id',currentUser.id).order('created_at',{ascending:true}).limit(1);
+    var firstMsg = msgs?.[0]?.content || '(sin mensaje)';
+    var avHtml = fromProf?.avatar_url ? '<div class="conv-avatar"><img src="'+fromProf.avatar_url+'"></div>' : '<div class="conv-avatar">'+initials+'</div>';
+    var card=document.createElement('div'); card.className='request-card';
+    card.innerHTML='<div class="request-header">'+avHtml+'<div><div style="font-size:13px;font-weight:500;">'+escHtml(username)+'</div><div style="font-size:11px;color:var(--muted);">'+(fromProf?.rama_fisica||'')+'</div></div></div>'+
+      '<div class="request-msg">'+escHtml(firstMsg)+'</div>'+
+      '<div class="request-actions">'+
+      '<button class="btn-accept" onclick="respondRequest(\''+req.id+'\',\''+req.from_user_id+'\',\''+escHtml(username)+'\',\'accepted\',this.closest(\'.request-card\'))">✓ Aceptar</button>'+
+      '<button class="btn-reject" onclick="respondRequest(\''+req.id+'\',\''+req.from_user_id+'\',\''+escHtml(username)+'\',\'rejected\',this.closest(\'.request-card\'))">✕ Rechazar</button>'+
+      '</div>';
+    rv.appendChild(card);
+  }
+}
+async function getProfileById(uid) {
+  if (profileCache["id:"+uid]) return profileCache["id:"+uid];
+  var { data } = await sb.from("profiles").select("*").eq("id",uid).single();
+  if (data) { profileCache["id:"+uid]=data; profileCache[data.username]=data; }
+  return data;
+}
+async function respondRequest(reqId, fromUserId, username, status, cardEl) {
+  var { error } = await sb.from('message_requests').update({ status }).eq('id',reqId);
+  if (error) { showToast('Error: '+error.message, true); return; }
+  cardEl.remove();
+  if (status==='accepted') {
+    showToast('✓ Solicitud aceptada');
+    checkPendingRequests();
+    document.getElementById('requests-view').style.display='none';
+    document.getElementById('conversations-view').style.display='flex';
+    loadConversations();
+    openChat(fromUserId, username);
+  } else {
+    showToast('Solicitud rechazada');
+    checkPendingRequests();
+  }
+}
+
+// ── CONVERSATIONS ─────────────────────────────────
+async function loadConversations() {
+  var cl=document.getElementById("conv-list");
+  cl.innerHTML='<div class="loading-msg" style="padding:1rem;">// cargando...</div>';
+  var { data:sent } = await sb.from("message_requests").select("*").eq("from_user_id",currentUser.id).eq("status","accepted");
+  var { data:recv } = await sb.from("message_requests").select("*").eq("to_user_id",currentUser.id).eq("status","accepted");
+  var { data:pending } = await sb.from("message_requests").select("*").eq("from_user_id",currentUser.id).eq("status","pending");
+  var convos = [];
+  if (sent) for (var r of sent) convos.push({ userId:r.to_user_id, status:"accepted" });
+  if (recv) for (var r of recv) convos.push({ userId:r.from_user_id, status:"accepted" });
+  if (pending) for (var r of pending) convos.push({ userId:r.to_user_id, status:"pending" });
+  if (!convos.length) { cl.innerHTML='<div style="padding:1rem;font-size:12px;color:var(--muted);font-family:var(--mono);">// sin conversaciones</div>'; return; }
+  cl.innerHTML="";
+  for (var c of convos) {
+    var prof = await getProfileById(c.userId);
+    var username=prof?.username||"usuario", initials=username.slice(0,2).toUpperCase();
+    var pendingBadge = c.status==="pending" ? '<span style="font-size:9px;background:rgba(246,173,85,0.15);color:var(--accent3);border:1px solid rgba(246,173,85,0.3);padding:2px 6px;border-radius:4px;margin-top:3px;display:inline-block;">⏳ pendiente de aceptación</span>' : "";
+    var { data:lastMsg } = await sb.from("messages").select("content,created_at").or("and(from_user_id.eq."+currentUser.id+",to_user_id.eq."+c.userId+"),and(from_user_id.eq."+c.userId+",to_user_id.eq."+currentUser.id+")").order("created_at",{ascending:false}).limit(1);
+    var preview = lastMsg?.[0]?.content?.slice(0,40) || "...";
+    var item=document.createElement("div");
+    item.className="conv-item";
+    if (c.status==="pending") { item.style.opacity="0.75"; item.style.cursor="default"; }
+    item.innerHTML=(prof?.avatar_url?'<div class="conv-avatar"><img src="'+prof.avatar_url+'"></div>':'<div class="conv-avatar">'+initials+'</div>')+'<div style="flex:1;min-width:0;"><div class="conv-name">'+escHtml(username)+'</div><div class="conv-preview">'+escHtml(preview)+'</div>'+pendingBadge+'</div>';
+    if (c.status==="accepted") { item.onclick=(function(uid,uname){ return function(){ openChat(uid,uname); }; })(c.userId,username); }
+    cl.appendChild(item);
+  }
+}
+var chatSubscription = null;
+
+async function openChat(userId, username) {
+  activeChatUserId = userId; activeChatUsername = username;
+  if (chatSubscription) { chatSubscription.unsubscribe(); chatSubscription = null; }
+  document.getElementById('requests-view').style.display = 'none';
+  document.getElementById('conversations-view').style.display = 'flex';
+  var ca = document.getElementById('chat-area');
+  ca.innerHTML =
+    '<div class="chat-header" style="display:flex;align-items:center;justify-content:space-between;">' +
+      '<div style="font-size:13px;font-weight:500;color:var(--accent);font-family:var(--mono);">@' + escHtml(username) + '</div>' +
+      '<button id="btn-del-conv" data-uid="' + userId + '" onclick="deleteConversation(this.dataset.uid)" style="background:rgba(252,129,129,0.1);color:#fc8181;border:1px solid rgba(252,129,129,0.2);font-family:var(--sans);font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;">🗑 Eliminar</button>' +
+    '</div>' +
+    '<div class="chat-messages" id="chat-msgs"><div style="padding:1rem;font-family:var(--mono);font-size:12px;color:var(--muted);">// cargando...</div></div>' +
+    '<div class="chat-input-area"><textarea class="chat-input" id="chat-input-text" placeholder="Escribe un mensaje..." rows="1" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();doSendChatMsg();}"></textarea><button class="chat-send-btn" onclick="doSendChatMsg()">Enviar</button></div>';
+  await loadChatMessages(userId);
+  startChatSubscription(userId);
+
+}
+
+function startChatSubscription(userId) {
+  chatSubscription = sb.channel('messages-' + currentUser.id)
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'messages' },
+      function(payload) {
+        var m = payload.new;
+        var isThisConv =
+          (m.from_user_id === currentUser.id && m.to_user_id === userId) ||
+          (m.from_user_id === userId && m.to_user_id === currentUser.id);
+        if (!isThisConv) return;
+        appendChatMessage(m);
+      })
+    .subscribe();
+}
+
+function appendChatMessage(m) {
+  var mc = document.getElementById('chat-msgs');
+  if (!mc) return;
+  var empty = mc.querySelector('.chat-empty');
+  if (empty) empty.remove();
+  var loading = mc.querySelector('div[style*="cargando"]');
+  if (loading) loading.remove();
+
+  // Intercept chess system messages
+  if (m.content && m.content.startsWith('__CHESS_START__:')) {
+    // UUID can contain colons split, so take everything after the prefix
+    var gameId = m.content.substring('__CHESS_START__:'.length);
+    // Only load board for the OTHER user (initiator already has it)
+    if (m.from_user_id !== currentUser.id) {
+      sb.from('chess_games').select('*').eq('id', gameId).single().then(function(res) {
+        if (!res.data) return;
+        activeGameId = gameId;
+        chessMyColor = res.data.player_white === currentUser.id ? 'white' : 'black';
+        chessCurrentTurn = res.data.current_turn;
+        chessBoard = JSON.parse(res.data.board_state);
+        // chess-area may not exist yet if chat was just opened
+        var area = document.getElementById('chess-area');
+        if (!area) {
+          // Create chess-area before chat messages if missing
+          var chatMsgs = document.getElementById('chat-msgs');
+          if (chatMsgs) {
+            area = document.createElement('div');
+            area.id = 'chess-area';
+            area.style.padding = '0 8px';
+            chatMsgs.parentNode.insertBefore(area, chatMsgs);
+          }
+        }
+        if (area) area.style.display = 'block';
+        renderChessArea(res.data);
+        subscribeChess(gameId);
+        showToast('♟ ¡Te invitaron a jugar Ajedrez!');
+      });
+    }
+    return; // Never render as chat bubble
+  }
+
+  var mine = m.from_user_id === currentUser.id;
+  var time = new Date(m.created_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+  // Get first name from profile
+  var firstName = mine
+    ? (currentProfile?.nombre || currentProfile?.username || 'Tú')
+    : (activeChatUsername || 'Usuario');
+  // Try to get opponent first name from cache
+  if (!mine && profileCache) {
+    var oppProf = profileCache['id:' + m.from_user_id] || Object.values(profileCache).find(function(p){ return p && p.id === m.from_user_id; });
+    if (oppProf && oppProf.nombre) firstName = oppProf.nombre;
+  }
+  var row = document.createElement('div');
+  row.className = 'msg-row ' + (mine ? 'mine' : 'theirs');
+  row.innerHTML = '<div style="font-size:10px;color:var(--muted);margin-bottom:2px;font-family:var(--mono);">' + escHtml(firstName) + '</div>'
+    + '<div class="msg-bubble ' + (mine ? 'mine' : 'theirs') + '">' + escHtml(m.content) + '</div>'
+    + '<div class="msg-time">' + time + '</div>';
+  mc.appendChild(row);
+  mc.scrollTop = mc.scrollHeight;
+}
+
+async function loadChatMessages(userId) {
+  var { data: msgs } = await sb.from('messages').select('*')
+    .or('and(from_user_id.eq.'+currentUser.id+',to_user_id.eq.'+userId+'),and(from_user_id.eq.'+userId+',to_user_id.eq.'+currentUser.id+')')
+    .order('created_at', { ascending: true });
+  var mc = document.getElementById('chat-msgs');
+  if (!mc) return;
+  if (!msgs || !msgs.length) { mc.innerHTML = '<div class="chat-empty">// sin mensajes aun</div>'; return; }
+  mc.innerHTML = '';
+  msgs.forEach(function(m) { appendChatMessage(m); });
+}
+
+async function doSendChatMsg() {
+  var text = document.getElementById('chat-input-text')?.value.trim();
+  if (!text || !activeChatUserId) return;
+  document.getElementById('chat-input-text').value = '';
+  var { error } = await sb.from('messages').insert({ from_user_id: currentUser.id, to_user_id: activeChatUserId, content: text });
+  if (error) { showToast('Error: ' + error.message, true); }
+}
+
+// ── DELETE CONVERSATION ──────────────────────────
+function deleteConversation(userId) {
+  showConfirm('¿Eliminar toda la conversación? Se borrarán todos los mensajes.', function() {
+    sb.from('messages').delete().eq('from_user_id', currentUser.id).eq('to_user_id', userId)
+      .then(function() {
+        return sb.from('messages').delete().eq('from_user_id', userId).eq('to_user_id', currentUser.id);
+      }).then(function() {
+        return sb.from('message_requests').delete().eq('from_user_id', currentUser.id).eq('to_user_id', userId);
+      }).then(function() {
+        return sb.from('message_requests').delete().eq('from_user_id', userId).eq('to_user_id', currentUser.id);
+      }).then(function() {
+        activeChatUserId = null;
+        activeChatUsername = null;
+        var ca = document.getElementById('chat-area');
+        if (ca) ca.innerHTML = '<div style="padding:2rem;font-family:var(--mono);font-size:12px;color:var(--muted);">// selecciona una conversación</div>';
+        showToast('✓ Conversación eliminada');
+        loadConversations();
+      }).catch(function(e) {
+        showToast('Error: ' + e.message, true);
+      });
+  });
+}
+
+// ── NEWS ──────────────────────────────────────────
+var newsLoaded = false;
+
+function parseRssItems(xmlText, source, color, emoji) {
+  var items = [];
+  try {
+    var doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+    doc.querySelectorAll('item').forEach(function(item) {
+      var title   = item.querySelector('title')?.textContent || '';
+      var link    = item.querySelector('link')?.textContent || '';
+      var desc    = (item.querySelector('description')?.textContent || '').replace(/<[^>]+>/g,'').substring(0,160);
+      var pubDate = item.querySelector('pubDate')?.textContent || '';
+      var imgUrl  = '';
+      var enc = item.querySelector('enclosure');
+      if (enc) imgUrl = enc.getAttribute('url') || '';
+      if (!imgUrl) {
+        var encoded = item.getElementsByTagNameNS('http://purl.org/rss/1.0/modules/content/','encoded')[0];
+        if (encoded) { var mx = encoded.textContent.match(/src=["']([^"']+\.(?:jpg|jpeg|png|webp|gif)[^"']*?)["']/i); if (mx && mx[1] && !mx[1].includes('emoji') && !mx[1].includes('s.w.org')) imgUrl = mx[1]; }
+      }
+      if (title) items.push({ title, desc: desc+(desc.length===160?'...':''), img: imgUrl, link, date: pubDate, source, color, emoji });
+    });
+  } catch(e) {}
+  return items;
+}
+
+async function fetchWithTimeout(url, ms) {
+  var ctrl = new AbortController();
+  var timer = setTimeout(function(){ ctrl.abort(); }, ms);
+  try { var r = await fetch(url, { signal: ctrl.signal }); clearTimeout(timer); return r; }
+  catch(e) { clearTimeout(timer); throw e; }
+}
+
+// Descarga las 4 fuentes una sola vez y la comparten el landing y el panel.
+// force=true vuelve a descargar (botón ↺ Actualizar).
+var newsPromise = null;
+function fetchNewsSources(force) {
+  if (!newsPromise || force) newsPromise = _fetchNewsSources();
+  return newsPromise;
+}
+async function _fetchNewsSources() {
+  // ── Las 3 fuentes en PARALELO con timeout de 5s cada una ──
+  var [guardianResult, admResult, pwResult, almaResult] = await Promise.allSettled([
+
+    // 1. The Guardian API
+    fetchWithTimeout('https://content.guardianapis.com/search?section=science&q=physics+OR+quantum+OR+astrophysics&show-fields=headline,trailText,thumbnail&order-by=newest&page-size=15&api-key=test', 5000)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        return (data.response?.results || []).map(function(item) {
+          return { title: item.fields?.headline||item.webTitle||'', desc: (item.fields?.trailText||'').replace(/<[^>]+>/g,'').substring(0,160), img: item.fields?.thumbnail||'', link: item.webUrl||'', date: item.webPublicationDate||'', source: 'The Guardian', color: 'var(--accent2)', emoji: 'φ' };
+        });
+      }),
+
+    // 2. ADM feed directo (permite CORS)
+    fetchWithTimeout('https://aliensdemedianoche.com/feed/', 5000)
+      .then(function(r){ return r.text(); })
+      .then(function(xml){ return parseRssItems(xml, '🛸 Aliens de Medianoche', 'var(--accent3)', '🛸'); }),
+
+    // 3. Science Alert vía rss2json
+    fetchWithTimeout('https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.sciencealert.com%2Ffeed', 5000)
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status !== 'ok') throw new Error('rss2json: ' + data.message);
+        return (data.items || []).map(function(item){
+          var title = (item.title || '').replace(/\s*\[[\w.]+\]\s*$/, '').trim();
+          var desc  = (item.description || '').replace(/<[^>]+>/g,'').substring(0,160);
+          return { title, desc: desc+(desc.length===160?'...':''), img: item.thumbnail||'', link: item.link||'https://sciencealert.com', date: item.pubDate||'', source: 'Science Alert', color: '#b794f4', emoji: '🔬' };
+        });
+      }),
+
+    // 4. ALMA Observatory vía rss2json
+    fetchWithTimeout('https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.almaobservatory.org%2Fes%2Ffeed%2F', 5000)
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status !== 'ok') throw new Error('rss2json ALMA: ' + data.message);
+        return (data.items || []).map(function(item){
+          var title = (item.title || '').trim();
+          var desc  = (item.description || '').replace(/<[^>]+>/g,'').substring(0,160);
+          return { title, desc: desc+(desc.length===160?'...':''), img: item.thumbnail||item.enclosure?.link||'', link: item.link||'https://www.almaobservatory.org/es/noticias/', date: item.pubDate||'', source: 'ALMA Observatory', color: '#76e4f7', emoji: '📡' };
+        });
+      })
+  ]);
+
+  var guardian = guardianResult.status === 'fulfilled' ? guardianResult.value : [];
+  var adm      = admResult.status      === 'fulfilled' ? admResult.value      : [];
+  var pw       = pwResult.status       === 'fulfilled' ? pwResult.value       : [];
+  var alma     = almaResult.status     === 'fulfilled' ? almaResult.value     : [];
+
+  if (guardianResult.status === 'rejected') console.log('Guardian error:', guardianResult.reason);
+  if (admResult.status      === 'rejected') console.log('ADM error:',      admResult.reason);
+  if (pwResult.status       === 'rejected') console.log('Science Alert error:', pwResult.reason);
+  if (almaResult.status     === 'rejected') console.log('ALMA error:',     almaResult.reason);
+
+  // ── Mezclar en secuencia: Guardian → ADM → Science Alert → ALMA ──
+  guardian.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  adm.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  pw.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  alma.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+
+  var mixed = [];
+  var maxLen = Math.max(guardian.length, adm.length, pw.length, alma.length);
+  for (var i = 0; i < maxLen; i++) {
+    if (i < guardian.length) mixed.push(guardian[i]);
+    if (i < adm.length)      mixed.push(adm[i]);
+    if (i < pw.length)       mixed.push(pw[i]);
+    if (i < alma.length)     mixed.push(alma[i]);
+  }
+
+  return { guardian, adm, pw, alma, mixed };
+}
+
+async function loadNews(force) {
+  var container = document.getElementById('news-container');
+  if (!container) return;
+  container.innerHTML = '<div class="loading-msg">// cargando noticias...</div>';
+
+  var n = await fetchNewsSources(force);
+  var guardian = n.guardian, adm = n.adm, pw = n.pw, alma = n.alma, mixed = n.mixed;
+
+  if (!guardian.length && !adm.length && !pw.length && !alma.length) {
+    container.innerHTML = '<div class="loading-msg">// no se encontraron noticias. Verifica tu conexión.</div>';
+    return;
+  }
+
+
+  container.innerHTML = '';
+
+  // Header con totales
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:1.2rem;display:flex;gap:1.5rem;flex-wrap:wrap;';
+  hdr.innerHTML =
+    '<span style="color:var(--accent2);">φ The Guardian <strong style="color:var(--text);">'+guardian.length+'</strong></span>' +
+    '<span style="color:var(--accent3);">🛸 ADM <strong style="color:var(--text);">'+adm.length+'</strong></span>' +
+    '<span style="color:#b794f4;">🔬 Science Alert <strong style="color:var(--text);">'+pw.length+'</strong></span>' +
+    '<span style="color:#76e4f7;">📡 ALMA <strong style="color:var(--text);">'+alma.length+'</strong></span>';
+  container.appendChild(hdr);
+
+  var grid = document.createElement('div');
+  grid.className = 'news-grid';
+
+  mixed.forEach(function(item) {
+    var date = item.date ? new Date(item.date).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'}) : '';
+    var card = document.createElement('div');
+    card.className = 'news-card';
+    card.onclick = function(){ window.open(item.link,'_blank'); };
+    card.innerHTML =
+      (item.img ? '<img class="news-img" src="'+item.img+'">' : '<div class="news-img-placeholder">'+item.emoji+'</div>') +
+      '<div class="news-body">' +
+        '<div class="news-source" style="color:'+item.color+';">'+escHtml(item.source)+'</div>' +
+        '<div class="news-title">'+escHtml(item.title)+'</div>' +
+        '<div class="news-desc">'+escHtml(item.desc)+'</div>' +
+        '<div class="news-footer">' +
+          '<span class="news-date">'+escHtml(date)+'</span>' +
+          '<span class="news-link">Leer más →</span>' +
+        '</div>' +
+      '</div>';
+    grid.appendChild(card);
+  });
+
+  container.appendChild(grid);
+  newsLoaded = true;
+}
+
+// ── TOOLS DROPDOWN ────────────────────────────────
+function toggleToolsMenu(e) {
+  e.stopPropagation();
+  var menu = document.getElementById('tools-menu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+function closeToolsMenu() {
+  var menu = document.getElementById('tools-menu');
+  if (menu) menu.style.display = 'none';
+}
+document.addEventListener('click', function() { closeToolsMenu(); });
+
+// ── NOTIFICATIONS ─────────────────────────────────
+var notifSubscription = null;
+var notifUnreadCount = 0;
+
+async function loadNotifications() {
+  var container = document.getElementById('notif-container');
+  if (!container || !currentUser) return;
+  container.innerHTML = '<div class="loading-msg">// cargando notificaciones...</div>';
+  var { data } = await sb.from('notifications').select('*')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (!data || !data.length) {
+    container.innerHTML = '<div class="loading-msg" style="text-align:center;padding:3rem;">🔕 Sin notificaciones por ahora</div>';
+    return;
+  }
+  container.innerHTML = '';
+  for (var n of data) {
+    container.appendChild(renderNotif(n));
+  }
+  // Mark displayed notifications as read
+  await sb.from('notifications').update({ read: true })
+    .eq('user_id', currentUser.id).eq('read', false);
+  updateNotifBadge(0);
+}
+
+function renderNotif(n) {
+  var el = document.createElement('div');
+  el.className = 'notif-item' + (n.read ? '' : ' unread');
+  var initials = (n.from_username || '??').slice(0,2).toUpperCase();
+  var time = timeAgo(new Date(n.created_at));
+  var icon = '';
+  var message = '';
+  if (n.type === 'mention') {
+    icon = '💬';
+    message = '<strong>@' + escHtml(n.from_username||'alguien') + '</strong> te mencionó en un post';
+  } else if (n.type === 'like') {
+    icon = '❤️';
+    message = '<strong>@' + escHtml(n.from_username||'alguien') + '</strong> le gustó tu post';
+  } else if (n.type === 'follow') {
+    icon = '👤';
+    message = '<strong>@' + escHtml(n.from_username||'alguien') + '</strong> te siguió';
+  } else {
+    message = escHtml(n.content || 'Notificación');
+  }
+  el.innerHTML =
+    '<div class="notif-avatar">' + icon + '</div>' +
+    '<div class="notif-body">' +
+      '<div class="notif-text">' + message + '</div>' +
+      (n.content ? '<div style="font-size:12px;color:var(--muted);margin-bottom:4px;font-style:italic;">"' + escHtml(n.content.substring(0,80)) + (n.content.length>80?'...':'') + '"</div>' : '') +
+      '<div class="notif-time">' + time + '</div>' +
+    '</div>' +
+    (!n.read ? '<div class="notif-dot"></div>' : '');
+  if (n.from_username) {
+    el.onclick = function(){ openPubProfile(n.from_username); };
+  }
+  return el;
+}
+
+function timeAgo(date) {
+  var s = Math.floor((new Date() - date)/1000);
+  if (s < 60) return 'hace unos segundos';
+  var m = Math.floor(s/60);
+  if (m < 60) return 'hace ' + m + ' min';
+  var h = Math.floor(m/60);
+  if (h < 24) return 'hace ' + h + 'h';
+  var d = Math.floor(h/24);
+  if (d < 7) return 'hace ' + d + 'd';
+  return date.toLocaleDateString('es',{day:'numeric',month:'short'});
+}
+
+function updateNotifBadge(count) {
+  notifUnreadCount = count;
+  var badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  if (count > 0) {
+    badge.style.display = 'inline-block';
+    badge.textContent = count > 99 ? '99+' : count;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+async function checkNotifUnread() {
+  if (!currentUser) return;
+  var { count } = await sb.from('notifications').select('*', { count: 'exact', head: true })
+    .eq('user_id', currentUser.id).eq('read', false);
+  updateNotifBadge(count || 0);
+}
+
+function subscribeNotifications() {
+  if (notifSubscription) { notifSubscription.unsubscribe(); notifSubscription = null; }
+  if (!currentUser) return;
+  notifSubscription = sb.channel('notif-' + currentUser.id)
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'notifications',
+      filter: 'user_id=eq.' + currentUser.id
+    }, function(payload) {
+      notifUnreadCount++;
+      updateNotifBadge(notifUnreadCount);
+      showToast('🔔 Nueva notificación de @' + (payload.new.from_username || 'alguien'));
+    })
+    .subscribe();
+}
+
+async function markAllNotifRead() {
+  await sb.from('notifications').update({ read: true })
+    .eq('user_id', currentUser.id).eq('read', false);
+  updateNotifBadge(0);
+  loadNotifications();
+  showToast('✓ Notificaciones marcadas como leídas');
+}
+
+async function deleteAllNotif() {
+  showConfirm('¿Borrar todas las notificaciones?', async function() {
+    await sb.from('notifications').delete().eq('user_id', currentUser.id);
+    updateNotifBadge(0);
+    loadNotifications();
+    showToast('✓ Notificaciones borradas');
+  });
+}
+
+// Detect mentions in post content and create notifications
+async function createMentionNotifs(postContent, postId) {
+  var mentions = postContent.match(/(?:^|[\s>])@(\w+)/g) || [];
+  var usernames = mentions.map(function(m){ return m.trim().replace(/^@/,''); });
+  usernames = [...new Set(usernames)]; // unique
+  if (!usernames.length) return;
+  var myUsername = currentProfile?.username || 'usuario';
+  for (var uname of usernames) {
+    if (uname === myUsername) continue; // don't notify yourself
+    var { data: prof } = await sb.from('profiles').select('id').eq('username', uname).single();
+    if (!prof) continue;
+    await sb.from('notifications').insert({
+      user_id: prof.id,
+      from_user_id: currentUser.id,
+      from_username: myUsername,
+      type: 'mention',
+      content: postContent.substring(0, 200),
+      post_id: postId
+    });
+  }
+}
+
+// ── CALCULATOR ────────────────────────────────────
+var expr='';
+function cf(v){expr+=v;document.getElementById('expr').textContent=expr||'_';}
+function cc(){expr='';document.getElementById('expr').textContent='_';document.getElementById('result').textContent='0';}
+function cd(){expr=expr.slice(0,-1);document.getElementById('expr').textContent=expr||'_';}
+function ce(){
+  try{
+    var e=expr.replace(/sin\(/g,'Math.sin(').replace(/cos\(/g,'Math.cos(').replace(/tan\(/g,'Math.tan(')
+      .replace(/asin\(/g,'Math.asin(').replace(/acos\(/g,'Math.acos(').replace(/atan\(/g,'Math.atan(')
+      .replace(/sqrt\(/g,'Math.sqrt(').replace(/log\(/g,'Math.log10(').replace(/ln\(/g,'Math.log(')
+      .replace(/abs\(/g,'Math.abs(').replace(/\^/g,'**');
+    var r=eval(e);
+    if(typeof r==='number') document.getElementById('result').textContent=(Math.abs(r)<1e-4||Math.abs(r)>1e8)?r.toExponential(4):parseFloat(r.toFixed(8)).toString();
+  }catch(err){document.getElementById('result').textContent='error';}
+}
+
+// ── THEOREMS ──────────────────────────────────────
+var theorems=[
+  {name:"Schrödinger (tiempo)",area:"Cuántica",eq:"iℏ ∂ψ/∂t = Ĥψ",desc:"Ecuación fundamental de la mecánica cuántica. Describe la evolución temporal del estado cuántico ψ."},
+  {name:"Heisenberg (incertidumbre)",area:"Cuántica",eq:"ΔxΔp ≥ ℏ/2",desc:"No es posible conocer simultáneamente posición y momento con precisión arbitraria."},
+  {name:"Einstein (energía-masa)",area:"Relatividad",eq:"E = mc²",desc:"La energía en reposo es igual a la masa por el cuadrado de la velocidad de la luz."},
+  {name:"Maxwell (Faraday)",area:"E&M",eq:"∇ × E = −∂B/∂t",desc:"Un campo magnético variable genera un campo eléctrico rotacional."},
+  {name:"Maxwell (Ampère)",area:"E&M",eq:"∇ × B = μ₀J + μ₀ε₀ ∂E/∂t",desc:"Corrientes y campos eléctricos variables generan campos magnéticos."},
+  {name:"Gauss (eléctrico)",area:"E&M",eq:"∇ · E = ρ/ε₀",desc:"El flujo eléctrico a través de una superficie cerrada es proporcional a la carga encerrada."},
+  {name:"Newton (segunda ley)",area:"Mecánica",eq:"F = dp/dt = ma",desc:"La fuerza neta es igual a la tasa de cambio del momento lineal."},
+  {name:"Boltzmann (entropía)",area:"Termodinámica",eq:"S = k_B ln(Ω)",desc:"La entropía es proporcional al logaritmo del número de microestados compatibles."},
+  {name:"Dirac (relativista)",area:"Cuántica",eq:"(iγᵘ∂ᵤ − m)ψ = 0",desc:"Ecuación relativista para fermiones de espín 1/2. Predijo el positrón."},
+  {name:"Lorentz (factor γ)",area:"Relatividad",eq:"γ = 1/√(1 − v²/c²)",desc:"Aparece en dilatación del tiempo, contracción de longitud y transformación de masa."},
+  {name:"Fourier (transformada)",area:"Matemática",eq:"F(ω) = ∫ f(t) e^{−iωt} dt",desc:"Descompone cualquier señal en sus componentes de frecuencia."},
+  {name:"Hubble-Lemaître",area:"Cosmología",eq:"v = H₀ d",desc:"Las galaxias se alejan con velocidad proporcional a su distancia."},
+  {name:"Klein-Gordon",area:"Cuántica",eq:"(□ + (mc/ℏ)²)ψ = 0",desc:"Ecuación de onda relativista para partículas de espín 0."},
+  {name:"Schwarzschild (radio)",area:"Relatividad",eq:"r_s = 2GM/c²",desc:"Define el horizonte de eventos de un agujero negro."},
+];
+function renderT(list){var g=document.getElementById('tgrid');g.innerHTML='';list.forEach(function(t){var d=document.createElement('div');d.className='theorem-card';d.innerHTML='<div class="theorem-header"><div class="theorem-name">'+t.name+'</div><div class="theorem-area">'+t.area+'</div></div><div class="theorem-eq">'+t.eq+'</div><div class="theorem-desc">'+t.desc+'</div>';g.appendChild(d);});}
+function filterT(q){var f=q.toLowerCase();renderT(theorems.filter(function(t){return(t.name+t.area+t.desc).toLowerCase().includes(f);}));}
+renderT(theorems);
+function copyConst(val,sym){navigator.clipboard.writeText(val).catch(function(){});showToast('✓ '+sym+' = '+val+' copiado');}
+
+// ── EDIT PROFILE ──────────────────────────────────
+var editAvatarFile=null;
+function openEditProfile(){
+  var p=currentProfile; if(!p)return;
+  document.getElementById('edit-nombre').value=p.nombre||'';
+  document.getElementById('edit-apellido').value=p.apellido||'';
+  document.getElementById('edit-username').value=p.username||'';
+  document.getElementById('edit-fecha').value=p.fecha_nac||'';
+  document.getElementById('edit-rama').value=p.rama_fisica||'';
+  document.getElementById('edit-error').textContent='';
+  editAvatarFile=null;
+  var prev=document.getElementById('edit-avatar-preview');
+  prev.innerHTML=p.avatar_url?'<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">':'<span id="edit-avatar-initials">'+(p.username||'?').slice(0,2).toUpperCase()+'</span>';
+  document.getElementById('edit-profile-box').style.display='block';
+  document.getElementById('edit-profile-box').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function closeEditProfile(){document.getElementById('edit-profile-box').style.display='none';editAvatarFile=null;}
+function previewEditAvatar(input){
+  if(!input.files||!input.files[0])return; editAvatarFile=input.files[0];
+  var r=new FileReader(); r.onload=function(e){document.getElementById('edit-avatar-preview').innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';};
+  r.readAsDataURL(editAvatarFile);
+}
+async function saveEditProfile(){
+  var nombre=document.getElementById('edit-nombre').value.trim(), apellido=document.getElementById('edit-apellido').value.trim();
+  var username=document.getElementById('edit-username').value.trim(), fecha=document.getElementById('edit-fecha').value;
+  var rama=document.getElementById('edit-rama').value;
+  document.getElementById('edit-error').textContent='';
+  if(!nombre||!apellido||!username||!rama){document.getElementById('edit-error').textContent='Todos los campos son obligatorios.';return;}
+  var btn=document.getElementById('edit-save-btn'); btn.disabled=true; btn.textContent='Guardando...';
+  var avatarUrl=currentProfile.avatar_url;
+  if(editAvatarFile){
+    var ext=editAvatarFile.name.split('.').pop(), path=currentUser.id+'/avatar.'+ext;
+    var{error:upErr}=await sb.storage.from('avatars').upload(path,editAvatarFile,{upsert:true});
+    if(!upErr){var{data:ud}=sb.storage.from('avatars').getPublicUrl(path);avatarUrl=ud.publicUrl+'?t='+Date.now();}
+  }
+  var{error}=await sb.from('profiles').update({nombre,apellido,username,fecha_nac:fecha||null,rama_fisica:rama,avatar_url:avatarUrl}).eq('id',currentUser.id);
+  btn.disabled=false; btn.textContent='Guardar cambios';
+  if(error){document.getElementById('edit-error').textContent='Error: '+error.message;return;}
+  profileCache={};
+  closeEditProfile(); showToast('✓ Perfil actualizado'); await initApp(currentUser);
+}
+async function changeProfileAvatar(input){
+  if(!input.files||!input.files[0]||!currentUser)return;
+  var file=input.files[0], ext=file.name.split('.').pop(), path=currentUser.id+'/avatar.'+ext;
+  var{error}=await sb.storage.from('avatars').upload(path,file,{upsert:true});
+  if(error){showToast('Error subiendo imagen',true);return;}
+  var{data}=sb.storage.from('avatars').getPublicUrl(path);
+  await sb.from('profiles').update({avatar_url:data.publicUrl+'?t='+Date.now()}).eq('id',currentUser.id);
+  profileCache={}; showToast('✓ Foto actualizada'); await initApp(currentUser);
+}
+
+// ── ADMIN ─────────────────────────────────────────
+var isAdmin = false;
+var allAdminUsers = [];
+var confirmCallback = null;
+
+async function checkAdmin() {
+  var { data } = await sb.from('admins').select('id').eq('id', currentUser.id).single();
+  isAdmin = !!data;
+  if (isAdmin) {
+    var btn = document.getElementById('tab-admin');
+    btn.style.display = 'inline-flex';
+    btn.style.alignItems = 'center';
+    btn.style.color = '#fc8181';
+    btn.style.border = '1px solid rgba(252,129,129,0.25)';
+    btn.style.cursor = 'pointer';
+    btn.addEventListener('click', function() {
+      showPanel('admin', btn);
+    });
+  }
+}
+
+async function loadAdminUsers() {
+  if (!isAdmin) return;
+  var list = document.getElementById('admin-users-list');
+  list.innerHTML = '<div style="font-family:var(--mono);font-size:12px;color:var(--muted);">// cargando...</div>';
+  var { data: profiles } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+  if (!profiles || !profiles.length) {
+    list.innerHTML = '<div style="font-family:var(--mono);font-size:12px;color:var(--muted);">// sin usuarios</div>';
+    return;
+  }
+  var { count: postCount } = await sb.from('posts').select('*', { count: 'exact', head: true });
+  var { count: msgCount } = await sb.from('messages').select('*', { count: 'exact', head: true });
+  document.getElementById('stat-users').textContent = profiles.length;
+  document.getElementById('stat-posts').textContent = postCount || 0;
+  document.getElementById('stat-msgs').textContent = msgCount || 0;
+  allAdminUsers = profiles;
+  renderAdminUsers(profiles);
+}
+
+function renderAdminUsers(profiles) {
+  var list = document.getElementById('admin-users-list');
+  list.innerHTML = '';
+  profiles.forEach(function(p) {
+    var initials = (p.username || '?').slice(0, 2).toUpperCase();
+    var isMe = p.id === currentUser.id;
+    var since = new Date(p.created_at).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' });
+    var card = document.createElement('div');
+    card.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;display:flex;align-items:center;gap:12px;';
+    var avHtml = p.avatar_url
+      ? '<div style="width:42px;height:42px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;"></div>'
+      : '<div style="width:42px;height:42px;border-radius:50%;background:rgba(99,179,237,0.15);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:700;flex-shrink:0;">'+initials+'</div>';
+    var badgeHtml = isMe ? '<span style="font-size:9px;background:rgba(252,129,129,0.15);color:#fc8181;border:1px solid rgba(252,129,129,0.3);padding:2px 6px;border-radius:4px;margin-left:6px;">ADMIN</span>' : '';
+    var uid = p.id, uname = escHtml(p.username || '');
+    var actionsHtml = isMe ? '<span style="font-size:11px;color:var(--muted);">Tu cuenta</span>' :
+      '<div style="display:flex;gap:6px;flex-shrink:0;">'+
+        '<button data-uid="'+uid+'" data-uname="'+uname+'" onclick="adminDeletePosts(this.dataset.uid,this.dataset.uname)" style="background:rgba(246,173,85,0.1);color:var(--accent3);border:1px solid rgba(246,173,85,0.3);font-family:var(--sans);font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer;">⊘ Posts</button>'+
+        '<button data-uid="'+uid+'" data-uname="'+uname+'" onclick="adminDeleteUser(this.dataset.uid,this.dataset.uname)" style="background:rgba(252,129,129,0.1);color:#fc8181;border:1px solid rgba(252,129,129,0.3);font-family:var(--sans);font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer;">✕ Borrar cuenta</button>'+
+      '</div>';
+    card.innerHTML = avHtml +
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">'+
+          '<span style="font-size:13px;font-weight:500;color:var(--text);">'+escHtml(p.username||'—')+'</span>'+badgeHtml+
+          '<span style="font-size:11px;color:var(--muted);">· '+escHtml((p.nombre||'')+' '+(p.apellido||''))+'</span>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:2px;">'+escHtml(p.rama_fisica||'Sin rama')+' · Desde '+since+'</div>'+
+      '</div>'+
+      actionsHtml;
+    list.appendChild(card);
+  });
+}
+
+function adminFilter(q) {
+  if (!q) { renderAdminUsers(allAdminUsers); return; }
+  var f = q.toLowerCase();
+  renderAdminUsers(allAdminUsers.filter(function(p) {
+    return ((p.username||'')+'|'+(p.nombre||'')+' '+(p.apellido||'')+'|'+(p.rama_fisica||'')).toLowerCase().includes(f);
+  }));
+}
+
+function showConfirm(msg, cb) {
+  document.getElementById('confirm-msg').textContent = msg;
+  var m = document.getElementById('confirm-modal');
+  m.style.display = 'flex';
+  document.getElementById('confirm-ok').onclick = function() { closeConfirm(); cb(); };
+}
+function closeConfirm() { document.getElementById('confirm-modal').style.display = 'none'; }
+
+async function adminDeleteUser(userId, username) {
+  showConfirm('¿Borrar la cuenta completa de @'+username+'? Se eliminarán su perfil, posts y mensajes. No se puede deshacer.', async function() {
+    await sb.from('messages').delete().eq('from_user_id', userId);
+    await sb.from('messages').delete().eq('to_user_id', userId);
+    await sb.from('message_requests').delete().eq('from_user_id', userId);
+    await sb.from('message_requests').delete().eq('to_user_id', userId);
+    await sb.from('posts').delete().eq('user_id', userId);
+    await sb.from('profiles').delete().eq('id', userId);
+    showToast('✓ Cuenta de @'+username+' eliminada');
+    loadAdminUsers();
+  });
+}
+
+async function adminDeletePosts(userId, username) {
+  showConfirm('¿Borrar todos los posts de @'+username+'? El perfil y mensajes se conservan.', async function() {
+    await sb.from('posts').delete().eq('user_id', userId);
+    showToast('✓ Posts de @'+username+' eliminados');
+    loadAdminUsers();
+  });
+}
+// ── TETRIS ────────────────────────────────────────
+var T = {
+  canvas: null, ctx: null, nextCanvas: null, nextCtx: null,
+  board: [], score: 0, level: 1, lines: 0,
+  current: null, next: null,
+  timer: null, running: false, paused: false,
+  COLS: 12, ROWS: 24, BLOCK: 20,
+  COLORS: ['#63b3ed','#68d391','#f6ad55','#fc8181','#b794f4','#76e4f7','#fbb6ce'],
+  SHAPES: [
+    [[1,1,1,1]],                          // I
+    [[1,1],[1,1]],                        // O
+    [[0,1,0],[1,1,1]],                    // T
+    [[1,0,0],[1,1,1]],                    // J
+    [[0,0,1],[1,1,1]],                    // L
+    [[0,1,1],[1,1,0]],                    // S
+    [[1,1,0],[0,1,1]]                     // Z
+  ]
+};
+
+function launchTetris() {
+  document.getElementById('tetris-container').style.display = 'block';
+  document.getElementById('tetris-container').scrollIntoView({behavior:'smooth'});
+  T.canvas = document.getElementById('tetris-canvas');
+  T.ctx = T.canvas.getContext('2d');
+  T.nextCanvas = document.getElementById('tetris-next');
+  T.nextCtx = T.nextCanvas.getContext('2d');
+  tetrisInit();
+}
+
+function closeTetris() {
+  tetrisStop();
+  document.getElementById('tetris-container').style.display = 'none';
+}
+
+function tetrisInit() {
+  T.board = Array.from({length:T.ROWS}, function(){ return Array(T.COLS).fill(0); });
+  T.score = 0; T.level = 1; T.lines = 0;
+  document.getElementById('tetris-score').textContent = '0';
+  document.getElementById('tetris-level').textContent = '1';
+  T.next = tetrisNewPiece();
+  tetrisSpawn();
+  tetrisStop();
+  T.running = true;
+  T.timer = setInterval(tetrisTick, 600);
+  document.addEventListener('keydown', tetrisKey);
+}
+
+function tetrisStop() {
+  T.running = false;
+  if (T.timer) { clearInterval(T.timer); T.timer = null; }
+  document.removeEventListener('keydown', tetrisKey);
+}
+
+function tetrisTogglePause() {
+  var btn = document.getElementById('tetris-pause-btn');
+  if (T.paused) {
+    T.paused = false; T.running = true;
+    T.timer = setInterval(tetrisTick, Math.max(100, 600-(T.level-1)*50));
+    document.addEventListener('keydown', tetrisKey);
+    if (btn) btn.textContent = '⏸ Pausa';
+    tetrisDraw();
+  } else {
+    T.paused = true; T.running = false;
+    if (T.timer) { clearInterval(T.timer); T.timer = null; }
+    document.removeEventListener('keydown', tetrisKey);
+    if (btn) btn.textContent = '▶ Continuar';
+    // Draw pause overlay
+    var ctx = T.ctx;
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0,0,T.canvas.width,T.canvas.height);
+    ctx.fillStyle = '#f6ad55';
+    ctx.font = 'bold 18px Space Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText('PAUSA', T.canvas.width/2, T.canvas.height/2);
+  }
+}
+
+function tetrisNewPiece() {
+  var idx = Math.floor(Math.random() * T.SHAPES.length);
+  return { shape: T.SHAPES[idx], color: T.COLORS[idx], x: Math.floor(T.COLS/2)-1, y: 0 };
+}
+
+function tetrisSpawn() {
+  T.current = T.next;
+  T.current.x = Math.floor(T.COLS/2) - Math.floor(T.current.shape[0].length/2);
+  T.current.y = 0;
+  T.next = tetrisNewPiece();
+  tetrisDrawNext();
+  if (!tetrisValid(T.current, 0, 0)) {
+    tetrisStop();
+    T.ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    T.ctx.fillRect(0, 0, T.canvas.width, T.canvas.height);
+    T.ctx.fillStyle = '#fc8181';
+    T.ctx.font = 'bold 18px Space Mono';
+    T.ctx.textAlign = 'center';
+    T.ctx.fillText('GAME OVER', T.canvas.width/2, T.canvas.height/2 - 20);
+    T.ctx.fillStyle = '#63b3ed';
+    T.ctx.font = '13px Space Mono';
+    T.ctx.fillText('Click para reiniciar', T.canvas.width/2, T.canvas.height/2 + 10);
+    T.canvas.onclick = function(){ T.canvas.onclick=null; tetrisInit(); };
+  }
+}
+
+function tetrisValid(piece, dx, dy, shape) {
+  shape = shape || piece.shape;
+  for (var r=0; r<shape.length; r++) {
+    for (var c=0; c<shape[r].length; c++) {
+      if (!shape[r][c]) continue;
+      var nx = piece.x + c + dx;
+      var ny = piece.y + r + dy;
+      if (nx<0 || nx>=T.COLS || ny>=T.ROWS) return false;
+      if (ny>=0 && T.board[ny][nx]) return false;
+    }
+  }
+  return true;
+}
+
+function tetrisRotate(shape) {
+  return shape[0].map(function(_,i){ return shape.map(function(r){ return r[i]; }).reverse(); });
+}
+
+function tetrisLock() {
+  T.current.shape.forEach(function(row,r){
+    row.forEach(function(v,c){
+      if (v) T.board[T.current.y+r][T.current.x+c] = T.current.color;
+    });
+  });
+  // Clear lines
+  var cleared = 0;
+  for (var r=T.ROWS-1; r>=0; r--) {
+    if (T.board[r].every(function(c){ return c!==0; })) {
+      T.board.splice(r,1);
+      T.board.unshift(Array(T.COLS).fill(0));
+      cleared++; r++;
+    }
+  }
+  if (cleared) {
+    var pts = [0,100,300,500,800];
+    T.score += (pts[cleared]||800) * T.level;
+    T.lines += cleared;
+    T.level = Math.floor(T.lines/10)+1;
+    document.getElementById('tetris-score').textContent = T.score;
+    document.getElementById('tetris-level').textContent = T.level;
+    clearInterval(T.timer);
+    T.timer = setInterval(tetrisTick, Math.max(100, 600 - (T.level-1)*50));
+  }
+  tetrisSpawn();
+}
+
+function tetrisTick() {
+  if (!T.running) return;
+  if (tetrisValid(T.current, 0, 1)) T.current.y++;
+  else tetrisLock();
+  tetrisDraw();
+}
+
+function tetrisKey(e) {
+  if (!T.running) return;
+  // Block scroll for all game keys
+  if (['ArrowLeft','ArrowRight','ArrowDown','ArrowUp',' '].includes(e.key)) {
+    e.preventDefault();
+  }
+  if (e.key==='ArrowLeft'  && tetrisValid(T.current,-1,0)) { T.current.x--; tetrisDraw(); }
+  if (e.key==='ArrowRight' && tetrisValid(T.current, 1,0)) { T.current.x++; tetrisDraw(); }
+  if (e.key==='ArrowDown'  && tetrisValid(T.current, 0,1)) { T.current.y++; T.score++; document.getElementById('tetris-score').textContent=T.score; tetrisDraw(); }
+  if (e.key==='ArrowUp') {
+    var rot = tetrisRotate(T.current.shape);
+    if (tetrisValid(T.current, 0, 0, rot)) { T.current.shape = rot; tetrisDraw(); }
+  }
+  if (e.key===' ') {
+    while(tetrisValid(T.current,0,1)) { T.current.y++; T.score+=2; }
+    document.getElementById('tetris-score').textContent=T.score;
+    tetrisLock(); tetrisDraw();
+  }
+}
+
+function tetrisDraw() {
+  var ctx = T.ctx, bs = T.BLOCK;
+  ctx.fillStyle = '#0a0e1a';
+  ctx.fillRect(0,0,T.canvas.width,T.canvas.height);
+  // Grid
+  ctx.strokeStyle = 'rgba(99,179,237,0.05)';
+  ctx.lineWidth = 0.5;
+  for(var r=0;r<T.ROWS;r++) { ctx.beginPath(); ctx.moveTo(0,r*bs); ctx.lineTo(T.COLS*bs,r*bs); ctx.stroke(); }
+  for(var c=0;c<T.COLS;c++) { ctx.beginPath(); ctx.moveTo(c*bs,0); ctx.lineTo(c*bs,T.ROWS*bs); ctx.stroke(); }
+  // Board
+  T.board.forEach(function(row,r){
+    row.forEach(function(color,c){
+      if(color){ drawBlock(ctx,c,r,color,bs); }
+    });
+  });
+  // Ghost piece
+  var ghost = {shape:T.current.shape, x:T.current.x, y:T.current.y, color:T.current.color};
+  while(tetrisValid(ghost,0,1)) ghost.y++;
+  ghost.shape.forEach(function(row,r){
+    row.forEach(function(v,c){
+      if(v){ ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.fillRect((ghost.x+c)*bs+1,(ghost.y+r)*bs+1,bs-2,bs-2); }
+    });
+  });
+  // Current piece
+  T.current.shape.forEach(function(row,r){
+    row.forEach(function(v,c){
+      if(v){ drawBlock(ctx,T.current.x+c,T.current.y+r,T.current.color,bs); }
+    });
+  });
+}
+
+function drawBlock(ctx,x,y,color,bs) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x*bs+1,y*bs+1,bs-2,bs-2);
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.fillRect(x*bs+1,y*bs+1,bs-2,3);
+  ctx.fillRect(x*bs+1,y*bs+1,3,bs-2);
+}
+
+function tetrisDrawNext() {
+  var ctx = T.nextCtx, bs = 16;
+  ctx.fillStyle = '#1a2235';
+  ctx.fillRect(0,0,80,80);
+  var s = T.next.shape;
+  var ox = Math.floor((4-s[0].length)/2), oy = Math.floor((4-s.length)/2);
+  s.forEach(function(row,r){
+    row.forEach(function(v,c){
+      if(v){ drawBlock(ctx,ox+c,oy+r,T.next.color,bs); }
+    });
+  });
+}
+
+
+</script>
+</body>
+</html>
