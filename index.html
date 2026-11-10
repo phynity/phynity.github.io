@@ -2120,6 +2120,30 @@ function parseRssItems(xmlText, source, color, emoji) {
   return items;
 }
 
+// Busca la imagen de una noticia de rss2json en todos los lugares posibles
+function pickRssImg(item) {
+  var base = item.link || '';
+  function fix(u) {
+    if (!u) return '';
+    u = u.replace(/&amp;/g,'&').trim();
+    if (u.indexOf('//') === 0) u = 'https:' + u;
+    else if (u.indexOf('/') === 0) { try { u = new URL(u, base).href; } catch(e) { return ''; } }
+    if (u.indexOf('http://') === 0) u = 'https://' + u.slice(7);
+    if (/emoji|s\.w\.org|gravatar|feedburner|pixel|1x1/i.test(u)) return '';
+    return u;
+  }
+  if (item.thumbnail) { var t = fix(item.thumbnail); if (t) return t; }
+  var enc = item.enclosure || {};
+  if (enc.link && (!enc.type || /image/i.test(enc.type) || /\.(jpe?g|png|webp|gif)/i.test(enc.link))) { var e = fix(enc.link); if (e) return e; }
+  if (enc.thumbnail) { var et = fix(enc.thumbnail); if (et) return et; }
+  var html = (item.content || '') + ' ' + (item.description || '');
+  var re = /<img[^>]+?(?:data-lazy-src|data-src|src)=["']([^"']+)["']/gi, m;
+  while ((m = re.exec(html))) { var u = fix(m[1]); if (u && !/^data:/.test(u)) return u; }
+  var ss = html.match(/srcset=["']([^"' ,]+)/i);
+  if (ss) { var s2 = fix(ss[1]); if (s2) return s2; }
+  return '';
+}
+
 async function fetchWithTimeout(url, ms) {
   var ctrl = new AbortController();
   var timer = setTimeout(function(){ ctrl.abort(); }, ms);
@@ -2160,7 +2184,7 @@ async function _fetchNewsSources() {
         return (data.items || []).map(function(item){
           var title = (item.title || '').replace(/\s*\[[\w.]+\]\s*$/, '').trim();
           var desc  = (item.description || '').replace(/<[^>]+>/g,'').substring(0,160);
-          return { title, desc: desc+(desc.length===160?'...':''), img: item.thumbnail||'', link: item.link||'https://sciencealert.com', date: item.pubDate||'', source: 'Science Alert', color: '#b794f4', emoji: '🔬' };
+          return { title, desc: desc+(desc.length===160?'...':''), img: pickRssImg(item), link: item.link||'https://sciencealert.com', date: item.pubDate||'', source: 'Science Alert', color: '#b794f4', emoji: '🔬' };
         });
       }),
 
@@ -2172,7 +2196,7 @@ async function _fetchNewsSources() {
         return (data.items || []).map(function(item){
           var title = (item.title || '').trim();
           var desc  = (item.description || '').replace(/<[^>]+>/g,'').substring(0,160);
-          return { title, desc: desc+(desc.length===160?'...':''), img: item.thumbnail||item.enclosure?.link||'', link: item.link||'https://www.almaobservatory.org/es/noticias/', date: item.pubDate||'', source: 'ALMA Observatory', color: '#76e4f7', emoji: '📡' };
+          return { title, desc: desc+(desc.length===160?'...':''), img: pickRssImg(item), link: item.link||'https://www.almaobservatory.org/es/noticias/', date: item.pubDate||'', source: 'ALMA Observatory', color: '#76e4f7', emoji: '📡' };
         });
       })
   ]);
@@ -2240,7 +2264,7 @@ async function loadNews(force) {
     card.className = 'news-card';
     card.onclick = function(){ window.open(item.link,'_blank'); };
     card.innerHTML =
-      (item.img ? '<img class="news-img" src="'+item.img+'">' : '<div class="news-img-placeholder">'+item.emoji+'</div>') +
+      (item.img ? '<img class="news-img" src="'+item.img+'" referrerpolicy="no-referrer" loading="lazy" onerror="this.outerHTML=\'<div class=&quot;news-img-placeholder&quot;>'+item.emoji+'</div>\'">' : '<div class="news-img-placeholder">'+item.emoji+'</div>') +
       '<div class="news-body">' +
         '<div class="news-source" style="color:'+item.color+';">'+escHtml(item.source)+'</div>' +
         '<div class="news-title">'+escHtml(item.title)+'</div>' +
