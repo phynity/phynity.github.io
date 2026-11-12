@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Despejando Ando</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3efe6; --board:#fbf9f4; --ink:#1f1d1a; --muted:#6f6a60; --line:#e2dccf;
+  --blue:#2f8be0; --blue-d:#1d64a8;
+  --pink:#e5336b; --pink-d:#a81f4b;
+  --gold:#f2a516; --gold-d:#b5730a;
+  --black:#24221f;
+  --ok:#2e9d5b; --bad:#d9433b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Fredoka,system-ui,sans-serif}
+button,select,input{font-family:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:18px 16px 40px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand h1{margin:0;font-size:clamp(26px,4vw,40px);font-weight:700;letter-spacing:.5px;line-height:1}
+.brand h1 .a{color:var(--blue)} .brand h1 .b{color:var(--pink)}
+.brand p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.lang{display:flex;border:2px solid var(--line);border-radius:999px;overflow:hidden}
+.lang button{border:0;background:transparent;padding:6px 12px;font-weight:600;cursor:pointer;color:var(--muted)}
+.lang button.on{background:var(--ink);color:#fff}
+
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 12px}
+.tab{border:2px solid var(--line);background:#fff;border-radius:12px;padding:8px 14px;font-size:15px;font-weight:600;cursor:pointer;color:var(--ink)}
+.tab.on{border-color:var(--ink);background:var(--ink);color:#fff}
+
+.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:space-between;margin-bottom:10px}
+.grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{border:2px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;font-size:15px;font-weight:500;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:#bdb5a5}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.counter{font-weight:600;color:var(--muted);min-width:56px;text-align:center}
+.stats{display:flex;gap:14px;color:var(--muted);font-size:14px}
+.stats b{color:var(--ink)}
+
+.boardCard{background:var(--board);border:2px solid var(--line);border-radius:22px;padding:18px;position:relative;
+  box-shadow:0 1px 0 rgba(0,0,0,.03), inset 0 0 0 6px #fff}
+.goal{text-align:center;color:var(--muted);font-size:15px;margin-bottom:6px}
+.goal b{color:var(--gold-d)}
+.board{display:flex;align-items:stretch;justify-content:center;gap:.25em;min-height:3.4em;padding:.3em 0;user-select:none;-webkit-user-select:none;font-size:64px}
+.side{flex:1 1 0;display:flex;align-items:center;padding:.2em .25em;border-radius:.3em;border:3px dashed transparent;transition:background .15s,border-color .15s;min-width:0}
+.side.L{justify-content:flex-end}
+.side.R{justify-content:flex-start}
+.side.target{border-color:#cfc6b4}
+.side.hot{border-color:var(--ok);background:rgba(46,157,91,.08)}
+.side.pick{cursor:pointer}
+.eqsign{display:flex;align-items:center;font-weight:700;color:var(--pink);text-shadow:0 .045em 0 var(--pink-d);padding:0 .08em}
+
+/* expression tiles */
+.g{display:inline-flex;align-items:center}
+.tile{display:inline-block;font-weight:700;line-height:1;padding:0 .04em}
+.tile.var{color:var(--gold);text-shadow:0 .045em 0 var(--gold-d)}
+.tile.let,.tile.num{color:var(--blue);text-shadow:0 .045em 0 var(--blue-d)}
+.tile.op{color:var(--pink);text-shadow:0 .045em 0 var(--pink-d);padding:0 .1em}
+.tile.ex{color:var(--black)}
+.sup{align-self:flex-start;font-size:.55em;margin-top:-.15em}
+.pr{display:inline-flex;align-items:stretch}
+.pr>.g,.pr>.frac,.pr>.rad,.pr>.tile{align-self:center}
+.pr svg{width:.32em;align-self:stretch;overflow:visible;min-height:1em}
+.pr svg path{fill:none;stroke:var(--black);stroke-width:.06em;vector-effect:non-scaling-stroke;stroke-linecap:round}
+.frac{display:inline-flex;flex-direction:column;align-items:center;margin:0 .06em}
+.frac>.top{padding:0 .08em .06em;display:inline-flex;align-items:center}
+.frac>.bot{align-self:stretch;display:flex;justify-content:center;border-top:.075em solid var(--pink);padding-top:.08em;border-radius:.02em}
+.rad{display:inline-flex;align-items:stretch;margin:0 .04em}
+.rsign{position:relative;display:inline-flex;align-items:stretch}
+.rsign svg{width:.55em;align-self:stretch;overflow:visible;transform:translateY(.035em)}
+.rsign svg path{fill:none;stroke:var(--black);stroke-width:.07em;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+.rsign .idx{position:absolute;left:-.02em;top:.12em;font-size:.42em;font-weight:700;color:var(--black);line-height:1}
+.radicand{border-top:.07em solid var(--black);padding:.1em .06em 0 .04em;display:inline-flex;align-items:center}
+.rad>.pm{align-self:center}
+
+/* draggable pieces */
+.piece{display:inline-flex;align-items:center;border-radius:.14em;cursor:grab;touch-action:none;transition:background .15s, box-shadow .15s, opacity .15s;outline:2px dashed transparent;outline-offset:2px}
+.piece:hover{background:rgba(47,139,224,.08);outline-color:#c9c0ae}
+.piece.sel{background:rgba(242,165,22,.16);outline-color:var(--gold)}
+.piece.lift{opacity:.25}
+.piece.hint{animation:hint 1.4s ease 2}
+.piece.shake{animation:shake .45s}
+.frac>.piece.bot{display:flex}
+.pc{display:inline-flex;align-items:center}
+.pc.new{animation:pop .6s ease}
+@keyframes hint{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 .08em var(--gold);background:rgba(242,165,22,.18)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-.08em)}40%{transform:translateX(.08em)}60%{transform:translateX(-.05em)}80%{transform:translateX(.05em)}}
+@keyframes pop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.15);opacity:1}100%{transform:scale(1)}}
+
+.ghost{position:fixed;z-index:50;pointer-events:none;display:inline-flex;align-items:center;justify-content:center;
+  background:#fff;border-radius:.18em;padding:.05em .18em;box-shadow:0 10px 24px rgba(0,0,0,.18);font-weight:700;transform:translate(-50%,-50%)}
+.ghost.flipA{animation:flipA .18s ease-in forwards}
+.ghost.flipB{animation:flipB .22s ease-out forwards}
+@keyframes flipA{to{transform:translate(-50%,-50%) rotateY(90deg)}}
+@keyframes flipB{from{transform:translate(-50%,-50%) rotateY(90deg)}to{transform:translate(-50%,-50%) rotateY(0)}}
+.lbl{display:inline-flex;align-items:center;gap:.05em}
+.lbl .o{color:var(--pink)} .lbl .v{color:var(--blue)} .lbl .k{color:var(--black)}
+.lbl sup{font-size:.6em;color:var(--black)}
+
+.msg{min-height:52px;margin-top:10px;border-radius:14px;padding:12px 16px;font-size:17px;background:#fff;border:2px solid var(--line);display:flex;align-items:center;gap:10px}
+.msg.ok{border-color:#a9d9bb;background:#f1faf4}
+.msg.bad{border-color:#f0b4ae;background:#fdf3f2}
+.msg.win{border-color:var(--gold);background:#fff8e8}
+.msg .ic{font-size:22px}
+.msg .lbl{font-size:1.05em}
+
+.solved{display:none;margin-top:10px;text-align:center}
+.solved.show{display:block}
+.stars{font-size:34px;color:var(--gold);letter-spacing:4px}
+.calc{margin-top:8px;font-size:22px;font-weight:600}
+.calc .ans{color:var(--gold-d)}
+
+.cols{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-top:16px}
+@media (max-width:820px){.cols{grid-template-columns:1fr}}
+.card{background:#fff;border:2px solid var(--line);border-radius:16px;padding:14px 16px}
+.card h3{margin:0 0 8px;font-size:17px}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:340px;overflow:auto}
+.log li{display:flex;flex-direction:column;gap:2px;padding:6px 8px;border-radius:10px;background:#faf8f3}
+.log .step{font-size:14px;color:var(--muted)}
+.log .mini{font-size:26px;display:flex;align-items:center;gap:.2em;flex-wrap:nowrap;overflow-x:auto;padding:2px 0}
+.empty{color:var(--muted);font-size:14px}
+.pairs{display:grid;grid-template-columns:1fr auto 1fr;gap:6px 10px;align-items:center;font-size:24px;font-weight:700}
+.pairs .arrow{color:var(--muted);font-size:18px}
+.pairs>div:nth-child(3n+1){text-align:right}
+.rules{margin:12px 0 0;padding-left:18px;color:#3d3a34;font-size:15px;line-height:1.45}
+
+/* builder */
+.builder{display:none;margin-bottom:12px}
+.builder.show{display:block}
+.brow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.field input,.field select{border:2px solid var(--line);border-radius:9px;padding:6px 8px;font-size:16px;color:var(--ink);background:#fff;min-width:70px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center;min-height:36px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--line);border-radius:999px;padding:3px 6px 3px 12px;font-size:18px;background:#faf8f3}
+.chip button{border:0;background:#eee6d8;border-radius:999px;width:22px;height:22px;cursor:pointer;font-size:13px;color:var(--muted)}
+.bnote{font-size:13px;color:var(--muted);margin-top:8px}
+.preview{font-size:34px;display:flex;justify-content:center;align-items:center;gap:.2em;margin-top:10px;min-height:56px;overflow-x:auto}
+footer{margin-top:22px;color:var(--muted);font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1><span class="a">Despejando</span> <span class="b">Ando</span></h1>
+      <p data-t="tagline"></p>
+    </div>
+    <div class="lang" role="group" aria-label="Idioma">
+      <button data-lang="es" class="on">ES</button><button data-lang="en">EN</button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+
+  <section class="card builder" id="builder">
+    <h3 data-t="bTitle"></h3>
+    <div class="brow">
+      <label class="field"><span data-t="bVar"></span><input id="bVar" value="x" maxlength="3" style="width:70px"></label>
+      <label class="field"><span data-t="bOther"></span><input id="bBase" value="11" maxlength="8" style="width:100px"></label>
+      <label class="field"><span data-t="bSide"></span>
+        <select id="bSide"><option value="L" data-t="left"></option><option value="R" data-t="right"></option></select></label>
+    </div>
+    <div class="brow" style="margin-top:10px">
+      <label class="field"><span data-t="bOp"></span>
+        <select id="bOpT">
+          <option value="add">+ a</option><option value="sub">− a</option>
+          <option value="mul">a · ( )</option><option value="div">( ) ÷ a</option>
+          <option value="pow">( )ⁿ</option><option value="root">ⁿ√( )</option>
+        </select></label>
+      <label class="field"><span data-t="bVal"></span><input id="bOpV" value="3" maxlength="6" style="width:80px"></label>
+      <button class="btn" id="bAdd" data-t="bAdd"></button>
+      <button class="btn" id="bClear" data-t="bClear"></button>
+      <button class="btn primary" id="bPlay" data-t="bPlay"></button>
+    </div>
+    <div class="chips" id="bChips"></div>
+    <div class="bnote" data-t="bNote"></div>
+    <div class="preview" id="bPrev"></div>
+  </section>
+
+  <div class="bar">
+    <div class="grp">
+      <button class="btn" id="prev" aria-label="Anterior">◀</button>
+      <span class="counter" id="counter">1 / 1</span>
+      <button class="btn" id="next" aria-label="Siguiente">▶</button>
+      <button class="btn" id="rand"><span>🎲</span><span data-t="random"></span></button>
+    </div>
+    <div class="grp">
+      <button class="btn" id="hint"><span>💡</span><span data-t="hint"></span></button>
+      <button class="btn" id="undo"><span>↶</span><span data-t="undo"></span></button>
+      <button class="btn" id="reset"><span>⟲</span><span data-t="reset"></span></button>
+    </div>
+  </div>
+
+  <div class="boardCard">
+    <div class="goal" id="goal"></div>
+    <div class="board" id="board"></div>
+    <div class="msg" id="msg"></div>
+    <div class="stats" id="stats" style="justify-content:flex-end;margin-top:6px"></div>
+    <div class="solved" id="solved">
+      <div class="stars" id="stars"></div>
+      <div class="grp" style="justify-content:center;margin-top:6px">
+        <button class="btn" id="calcBtn"><span>🧮</span><span data-t="calc"></span></button>
+        <button class="btn primary" id="nextBtn" data-t="nextEq"></button>
+      </div>
+      <div class="calc" id="calc"></div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="card">
+      <h3 data-t="logTitle"></h3>
+      <ul class="log" id="log"></ul>
+    </div>
+    <div class="card">
+      <h3 data-t="pairsTitle"></h3>
+      <div class="pairs" id="pairs"></div>
+      <ul class="rules" id="rules"></ul>
+    </div>
+  </div>
+
+  <footer data-t="footer"></footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- i18n ---------- */
+const STR = {
+  es:{
+    tagline:"Una manera divertida y visual de despejar ecuaciones · Prof. Luis E. González",
+    sets:{n1:"Nivel 1 · Un paso", n2:"Nivel 2 · Dos pasos", n3:"Nivel 3 · Reto", fis:"Física · Fórmulas", own:"✏️ Crea la tuya"},
+    random:"Aleatoria", hint:"Pista", undo:"Deshacer", reset:"Reiniciar", calc:"Calcular el valor", nextEq:"Siguiente ecuación ▶",
+    goal:v=>`Objetivo: deja a <b>${v}</b> sola de su lado del =`,
+    start:"Arrastra una ficha al otro lado del <b>=</b>. Al cruzar, se convierte en su <b>operación inversa</b>. (También puedes tocar la ficha y luego tocar el otro lado.)",
+    moved:(a,b)=>`${a} cruzó el = y se volvió ${b}`,
+    wrong:"¡Epa! Esa ficha está <b>por dentro</b>. Primero sale lo que está más afuera.",
+    hintMsg:(v,a)=>`Lo último que se le hizo a <b>${v}</b> fue ${a}. Eso es lo primero que sale.`,
+    pm:"Ojo: al sacar raíz de una potencia par aparece <b>±</b>, porque (−3)² y 3² dan lo mismo.",
+    win:v=>`¡Despejado! <b>${v}</b> quedó sola.`,
+    moves:"Movidas", errors:"Errores",
+    logTitle:"Pasos (cópialos en tu cuaderno)", empty:"Aquí aparece cada paso del despeje.",
+    step:(n,a,b)=>`Paso ${n}: ${a} → ${b}`,
+    pairsTitle:"Operaciones inversas",
+    rules:["Lo que está <b>sumando</b> pasa <b>restando</b>, y viceversa.","Lo que está <b>multiplicando</b> pasa <b>dividiendo</b> a <i>todo</i> el otro lado.","Una <b>potencia</b> pasa como <b>raíz</b> (y la raíz como potencia).","Se despeja en <b>orden inverso</b> a PEMDAS: lo último que se le hizo a la incógnita sale primero."],
+    noNum:"Esta tiene letras: el despeje ya es la respuesta (una fórmula nueva).",
+    noReal:"No hay solución real (raíz par de un número negativo).",
+    or:" ó ",
+    bTitle:"Crea tu propia ecuación", bVar:"Incógnita", bOther:"Otro lado", bSide:"Incógnita a la…", left:"izquierda", right:"derecha",
+    bOp:"Operación (de adentro hacia afuera)", bVal:"Valor", bAdd:"+ Agregar", bClear:"Borrar", bPlay:"▶ Jugar",
+    bNote:"Agrega las operaciones en el orden en que se le aplican a la incógnita (la primera queda más adentro).",
+    bNeed:"Agrega al menos una operación.",
+    footer:"Basado en el kit físico “Despejando Ando” (2022) · versión interactiva"
+  },
+  en:{
+    tagline:"A fun, visual way to solve for the unknown · Prof. Luis E. González",
+    sets:{n1:"Level 1 · One step", n2:"Level 2 · Two steps", n3:"Level 3 · Challenge", fis:"Physics · Formulas", own:"✏️ Make your own"},
+    random:"Random", hint:"Hint", undo:"Undo", reset:"Reset", calc:"Calculate the value", nextEq:"Next equation ▶",
+    goal:v=>`Goal: get <b>${v}</b> alone on its side of the =`,
+    start:"Drag a tile across the <b>=</b>. When it crosses, it turns into its <b>inverse operation</b>. (You can also tap a tile, then tap the other side.)",
+    moved:(a,b)=>`${a} crossed the = and became ${b}`,
+    wrong:"Whoa! That tile is <b>on the inside</b>. The outermost one has to go first.",
+    hintMsg:(v,a)=>`The last thing done to <b>${v}</b> was ${a}. That's the first to go.`,
+    pm:"Heads up: taking an even root gives <b>±</b>, because (−3)² and 3² are the same.",
+    win:v=>`Solved! <b>${v}</b> is all alone.`,
+    moves:"Moves", errors:"Mistakes",
+    logTitle:"Steps (copy them in your notebook)", empty:"Each step of the solution shows up here.",
+    step:(n,a,b)=>`Step ${n}: ${a} → ${b}`,
+    pairsTitle:"Inverse operations",
+    rules:["What is <b>added</b> moves over <b>subtracted</b>, and vice versa.","What <b>multiplies</b> moves over <b>dividing</b> the <i>whole</i> other side.","A <b>power</b> moves over as a <b>root</b> (and a root as a power).","Undo in <b>reverse PEMDAS order</b>: the last thing done to the unknown comes off first."],
+    noNum:"This one has letters: the result is the answer (a new formula).",
+    noReal:"No real solution (even root of a negative number).",
+    or:" or ",
+    bTitle:"Make your own equation", bVar:"Unknown", bOther:"Other side", bSide:"Unknown on the…", left:"left", right:"right",
+    bOp:"Operation (inside to outside)", bVal:"Value", bAdd:"+ Add", bClear:"Clear", bPlay:"▶ Play",
+    bNote:"Add operations in the order they're applied to the unknown (the first one ends up innermost).",
+    bNeed:"Add at least one operation.",
+    footer:"Based on the physical kit “Despejando Ando” (2022) · interactive version"
+  }
+};
+let lang = "es";
+try{ const l = localStorage.getItem("da-lang"); if(l==="en"||l==="es") lang=l; }catch(e){}
+const T = k => STR[lang][k];
+
+/* ---------- problems ---------- */
+function parseOps(arr){
+  return arr.map(s=>{
+    const c=s[0], v=s.slice(1);
+    if(c==="+") return {t:"add",v};
+    if(c==="-") return {t:"sub",v};
+    if(c==="*") return {t:"mul",v};
+    if(c==="·") return {t:"mul",v,post:true};
+    if(c==="/") return {t:"div",v};
+    if(c==="^") return {t:"pow",v};
+    if(c==="r") return {t:"root",v};
+  });
+}
+const P = (vr,base,ops,side="L") => ({vr, base:String(base), ops:parseOps(ops), side});
+const SETS = {
+  n1:[P("x",12,["+5"]),P("x",9,["-4"]),P("x",21,["*3"]),P("x",6,["/4"]),P("x",30,["+12"],"R"),P("x",49,["^2"]),P("x",5,["r2"])],
+  n2:[P("x",11,["*2","+3"]),P("x",4,["/3","-2"]),P("x",20,["-1","*5"]),P("x",9,["+4","/2"]),P("x",17,["*4","-3"],"R"),P("x",48,["^2","*3"]),P("x",7,["r2","+2"])],
+  n3:[P("x",4,["+3","*2","/5"]),P("x",9,["-1","/2","^2"]),P("x",10,["^3","+3","/3"]),P("x",9,["+1","r2","*4","-3"]),P("x",4,["*2","r3","+1"])],
+  fis:[P("X","Y",["^3","+F"],"R"),P("a","F",["*m"],"R"),P("t","d",["*v"],"R"),P("h","Eₚ",["*g","*m"],"R"),P("c","E",["^2","*m"],"R"),
+       P("v","K",["^2","*m","/2"],"R"),P("a","v",["·t","+v₀"],"R"),P("V","P",["^2","/R"],"R"),P("C","F",["*9","/5","+32"],"R"),P("L","T",["/g","r2","*2π"],"R")],
+  own:[]
+};
+const SET_KEYS = ["n1","n2","n3","fis","own"];
+
+/* ---------- state ---------- */
+const S = {set:"n1", idx:0, prob:null, vOps:[], oOps:[], hist:[], moves:0, errs:0, sel:null, flashNew:false, msg:null, randomMode:false};
+let builderOps = [];
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const el = (tag, cls, kids) => { const e=document.createElement(tag); if(cls) e.className=cls; (kids||[]).forEach(k=>k&&e.appendChild(k)); return e; };
+const isNum = v => /^\d+(\.\d+)?$/.test(v);
+const valCls = v => isNum(v) ? "num" : "let";
+const tok = (txt, cls) => { const s=el("span","tile "+cls); s.textContent=txt; return s; };
+const clone = o => JSON.parse(JSON.stringify(o));
+const SVGNS="http://www.w3.org/2000/svg";
+function svg(d, vb){ const s=document.createElementNS(SVGNS,"svg"); s.setAttribute("viewBox",vb); s.setAttribute("preserveAspectRatio","none"); const p=document.createElementNS(SVGNS,"path"); p.setAttribute("d",d); s.appendChild(p); return s; }
+function paren(inner){
+  const g=el("span","pr");
+  g.appendChild(svg("M90,0 C10,25 10,75 90,100","0 0 100 100"));
+  g.appendChild(inner);
+  g.appendChild(svg("M10,0 C90,25 90,75 10,100","0 0 100 100"));
+  return g;
+}
+function inverse(op){
+  switch(op.t){
+    case "add": return {t:"sub",v:op.v};
+    case "sub": return {t:"add",v:op.v};
+    case "mul": return {t:"div",v:op.v};
+    case "div": return {t:"mul",v:op.v};
+    case "pow": return {t:"root",v:op.v,pm:isNum(op.v)&&Number(op.v)%2===0};
+    case "root":return {t:"pow",v:op.v};
+  }
+}
+function label(op){ // HTML chip for messages
+  const v=`<span class="v">${op.v}</span>`;
+  switch(op.t){
+    case "add": return `<span class="lbl"><span class="o">+</span>${v}</span>`;
+    case "sub": return `<span class="lbl"><span class="o">−</span>${v}</span>`;
+    case "mul": return `<span class="lbl"><span class="o">×</span>${v}</span>`;
+    case "div": return `<span class="lbl"><span class="o">÷</span>${v}</span>`;
+    case "pow": return `<span class="lbl"><span class="k">( )</span><sup>${op.v}</sup></span>`;
+    case "root":return `<span class="lbl">${op.pm?'<span class="o">±</span>':''}${op.v==="2"?"":`<sup>${op.v}</sup>`}<span class="k">√</span></span>`;
+  }
+}
+
+/* ---------- expression renderer ---------- */
+// returns {el, prec, lead}; prec: 10 base, 9 self-delimited, 8 power, 6 product, 5 sum
+function build(base, isVar, ops, opt){
+  const live = opt.live;
+  let cur = {el: tok(base, isVar ? "var" : valCls(base)), prec:10, lead: isVar ? "let" : valCls(base)};
+  ops.forEach((op,i)=>{
+    const P = (kids, extra) => {
+      const p = el("span", (live && isVar ? "piece" : "pc") + (extra?" "+extra:""), kids);
+      if(live && isVar){ p.dataset.i=i; p.setAttribute("role","button"); p.setAttribute("tabindex","0"); }
+      if(!isVar && opt.flashNew && i===ops.length-1) p.classList.add("new");
+      return p;
+    };
+    if(op.t==="add"||op.t==="sub"){
+      const g=el("span","g",[cur.el, P([tok(op.t==="add"?"+":"−","op"), tok(op.v,valCls(op.v))])]);
+      cur={el:g,prec:5,lead:cur.lead};
+    } else if(op.t==="mul"){
+      const needPar = cur.prec<=6;
+      const inner = needPar ? paren(cur.el) : cur.el;
+      const leadIn = needPar ? "par" : cur.lead;
+      if(op.post){
+        cur={el:el("span","g",[inner, P([tok("·","op"), tok(op.v,valCls(op.v))])]),prec:6,lead:leadIn};
+      } else {
+        const kids=[tok(op.v,valCls(op.v))];
+        if(leadIn==="num" || (leadIn==="op")) kids.push(tok("·","op"));
+        cur={el:el("span","g",[P(kids), inner]),prec:6,lead:valCls(op.v)};
+      }
+    } else if(op.t==="div"){
+      const top=el("span","top",[cur.el]);
+      const bot=P([tok(op.v,valCls(op.v))],"bot");
+      cur={el:el("span","frac",[top,bot]),prec:9,lead:"other"};
+    } else if(op.t==="pow"){
+      const inner = cur.prec===10 ? cur.el : paren(cur.el);
+      const sup = P([tok(op.v,"ex")],"sup");
+      cur={el:el("span","g",[inner,sup]),prec:8,lead:cur.prec===10?cur.lead:"par"};
+    } else if(op.t==="root"){
+      const sign=el("span","rsign");
+      sign.appendChild(svg("M0,62 L18,55 L42,100 L72,0 L100,0","0 0 100 100"));
+      if(op.v!=="2"){ const ix=el("span","idx"); ix.textContent=op.v; sign.appendChild(ix); }
+      const kids=[]; if(op.pm){ const pm=tok("±","op"); pm.classList.add("pm"); kids.push(pm); }
+      kids.push(sign);
+      const piece=P(kids); piece.style.alignItems="stretch"; if(op.pm) piece.firstChild.style.alignSelf="center";
+      const rad=el("span","rad",[piece, el("span","radicand",[cur.el])]);
+      cur={el:rad,prec:op.pm?5:9,lead:op.pm?"op":"other"};
+    }
+  });
+  return cur;
+}
+function equationNodes(vr, vOps, base, oOps, side, opt){
+  const V = build(vr, true, vOps, opt).el;
+  const O = build(base, false, oOps, opt).el;
+  return side==="L" ? [V,O] : [O,V];
+}
+
+/* ---------- evaluation ---------- */
+function rootReal(x,n){ if(x<0 && n%2===1) return -Math.pow(-x,1/n); if(x<0) return NaN; return Math.pow(x,1/n); }
+function evaluate(base, ops){
+  if(!isNum(base) || ops.some(o=>!isNum(o.v))) return null;
+  let vals=[Number(base)];
+  ops.forEach(o=>{
+    const a=Number(o.v); const out=[];
+    vals.forEach(x=>{
+      if(o.t==="add") out.push(x+a);
+      else if(o.t==="sub") out.push(x-a);
+      else if(o.t==="mul") out.push(x*a);
+      else if(o.t==="div") out.push(x/a);
+      else if(o.t==="pow") out.push(Math.pow(x,a));
+      else if(o.t==="root"){ const r=rootReal(x,a); if(!isNaN(r)){ out.push(r); if(o.pm && r!==0) out.push(-r); } }
+    });
+    vals=out;
+  });
+  const seen=new Set(); return vals.filter(v=>{const k=v.toFixed(9); if(seen.has(k)) return false; seen.add(k); return true;});
+}
+const fmt = x => { if(Math.abs(x-Math.round(x))<1e-9) return String(Math.round(x)).replace("-","−"); return (Math.round(x*1000)/1000).toString().replace("-","−"); };
+
+/* ---------- random generator ---------- */
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+function randomProblem(level){
+  for(let tries=0;tries<200;tries++){
+    const x=ri(1,12); let v=x; const ops=[]; let ok=true;
+    for(let s=0;s<level;s++){
+      const prev=ops.length?ops[ops.length-1].t:null;
+      const cand=[];
+      if(prev!=="add"&&prev!=="sub"){ cand.push("add"); if(v>2) cand.push("sub"); }
+      if(prev!=="mul"&&prev!=="div"){ cand.push("mul"); const ds=[2,3,4,5,6,7,8,9].filter(d=>v%d===0&&v/d>=1); if(ds.length) cand.push("div"); }
+      if(prev!=="pow"&&prev!=="root"&&level>=2){ if(v<=12) cand.push("pow"); const r=Math.round(Math.sqrt(v)); if(r*r===v&&v>1) cand.push("root"); }
+      if(!cand.length){ok=false;break;}
+      const t=cand[ri(0,cand.length-1)];
+      if(t==="add"){const a=ri(1,15); ops.push({t,v:String(a)}); v+=a;}
+      else if(t==="sub"){const a=ri(1,v-1); ops.push({t,v:String(a)}); v-=a;}
+      else if(t==="mul"){const a=ri(2,9); ops.push({t,v:String(a)}); v*=a;}
+      else if(t==="div"){const ds=[2,3,4,5,6,7,8,9].filter(d=>v%d===0); const a=ds[ri(0,ds.length-1)]; ops.push({t,v:String(a)}); v/=a;}
+      else if(t==="pow"){ops.push({t,v:"2"}); v*=v;}
+      else if(t==="root"){ops.push({t,v:"2"}); v=Math.round(Math.sqrt(v));}
+    }
+    if(ok && v>0 && v<1000) return {vr:"x", base:String(v), ops, side: Math.random()<.25?"R":"L"};
+  }
+  return P("x",11,["*2","+3"]);
+}
+
+/* ---------- rendering ---------- */
+function renderTabs(){
+  const nav=$("tabs"); nav.innerHTML="";
+  SET_KEYS.forEach(k=>{
+    const b=el("button","tab"+(S.set===k?" on":"")); b.textContent=T("sets")[k];
+    b.onclick=()=>{ S.set=k; S.idx=0; S.randomMode=false; if(k==="own"){ renderTabs(); showBuilder(); if(SETS.own.length) load(SETS.own[0]); else load(P("x",11,["*2","+3"])); } else { load(SETS[k][0]); } };
+    nav.appendChild(b);
+  });
+}
+function showBuilder(){ $("builder").classList.toggle("show", S.set==="own"); renderBuilder(); }
+
+function render(){
+  const p=S.prob;
+  $("goal").innerHTML=T("goal")(p.vr);
+  const board=$("board"); board.innerHTML="";
+  const nodes=equationNodes(p.vr,S.vOps,p.base,S.oOps,p.side,{live:true,flashNew:S.flashNew});
+  S.flashNew=false;
+  const L=el("div","side L",[nodes[0]]), R=el("div","side R",[nodes[1]]);
+  const eq=el("div","eqsign"); eq.textContent="=";
+  const varSideEl = p.side==="L"?L:R, otherEl = p.side==="L"?R:L;
+  otherEl.id="dropZone"; varSideEl.id="varZone";
+  board.append(L,eq,R);
+  if(S.sel!==null){ otherEl.classList.add("target","pick"); const pc=board.querySelector(`.piece[data-i="${S.sel}"]`); if(pc) pc.classList.add("sel"); }
+  otherEl.addEventListener("click",()=>{ if(S.sel!==null){ const i=S.sel; S.sel=null; attempt(i,null); } });
+  fit();
+  // controls
+  const set=SETS[S.set];
+  const nav = !S.randomMode && set.length>0;
+  $("counter").textContent = S.randomMode ? "🎲" : (set.length? `${S.idx+1} / ${set.length}` : "—");
+  $("prev").disabled = !nav || S.idx===0;
+  $("next").disabled = !nav || S.idx>=set.length-1;
+  $("rand").style.display = (S.set==="fis"||S.set==="own") ? "none" : "";
+  $("undo").disabled = !S.hist.length;
+  $("hint").disabled = !S.vOps.length;
+  renderMsg(); renderLog(); renderSolved();
+}
+function fit(){
+  const board=$("board"); let fs = window.innerWidth<600 ? 46 : 64;
+  board.style.fontSize=fs+"px";
+  let guard=0;
+  while(board.scrollWidth>board.clientWidth+1 && fs>18 && guard++<40){ fs-=3; board.style.fontSize=fs+"px"; }
+}
+function setMsg(kind, html){ S.msg={kind,html}; renderMsg(); }
+function renderMsg(){
+  const m=$("msg"); const k=S.msg?S.msg.kind:"info";
+  m.className="msg"+(k==="ok"?" ok":k==="bad"?" bad":k==="win"?" win":"");
+  const ic={info:"👉",ok:"✅",bad:"🙃",win:"🎉",hint:"💡"}[k]||"👉";
+  const html = S.msg ? (typeof S.msg.html==="function"?S.msg.html():S.msg.html) : T("start");
+  m.innerHTML=`<span class="ic">${ic}</span><span>${html}</span>`;
+  $("stats").innerHTML=`${T("moves")}: <b>${S.moves}</b> &nbsp;·&nbsp; ${T("errors")}: <b>${S.errs}</b>`;
+}
+function renderLog(){
+  const ul=$("log"); ul.innerHTML="";
+  if(!S.hist.length){ const li=el("li"); li.innerHTML=`<span class="empty">${T("empty")}</span>`; li.style.background="transparent"; ul.appendChild(li); return; }
+  const p=S.prob;
+  const start=el("li"); const ms=el("div","mini");
+  const n0=equationNodes(p.vr,p.ops,p.base,[],p.side,{live:false}); const e0=el("span","tile op"); e0.textContent="=";
+  ms.append(n0[0],e0,n0[1]); start.appendChild(ms); ul.appendChild(start);
+  S.hist.forEach((h,i)=>{
+    const li=el("li"); const st=el("div","step"); st.innerHTML=T("step")(i+1,label(h.moved),label(h.inv));
+    const mini=el("div","mini");
+    const n=equationNodes(p.vr,h.vAfter,p.base,h.oAfter,p.side,{live:false}); const eq=el("span","tile op"); eq.textContent="=";
+    mini.append(n[0],eq,n[1]); li.append(st,mini); ul.appendChild(li);
+  });
+  ul.scrollTop=ul.scrollHeight;
+}
+function renderSolved(){
+  const done = S.vOps.length===0;
+  $("solved").classList.toggle("show",done);
+  if(!done){ $("calc").innerHTML=""; return; }
+  $("stars").textContent = S.errs===0?"★★★":S.errs===1?"★★☆":"★☆☆";
+  const ev=evaluate(S.prob.base,S.oOps);
+  $("calcBtn").style.display="";
+  $("nextBtn").style.display = (S.randomMode || (SETS[S.set].length && S.idx<SETS[S.set].length-1)) ? "" : "none";
+  if(ev===null) $("calcBtn").style.display="none";
+}
+
+/* ---------- actions ---------- */
+function load(p){
+  S.prob=clone(p); S.vOps=clone(p.ops); S.oOps=[]; S.hist=[]; S.moves=0; S.errs=0; S.sel=null; S.msg=null;
+  $("calc").innerHTML="";
+  renderTabs(); $("builder").classList.toggle("show", S.set==="own"); render();
+}
+function attempt(i, ghost){
+  const last=S.vOps.length-1;
+  const board=$("board");
+  if(i!==last){
+    S.errs++;
+    const pc=board.querySelector(`.piece[data-i="${i}"]`);
+    if(ghost) ghost.remove();
+    if(pc){ pc.classList.remove("lift"); pc.classList.add("shake"); }
+    setMsg("bad",T("wrong"));
+    setTimeout(()=>{ if(pc) pc.classList.remove("shake"); },500);
+    return;
+  }
+  const op=S.vOps[i], inv=inverse(op);
+  const commit=()=>{
+    S.vOps=S.vOps.slice(0,-1); S.oOps=S.oOps.concat([inv]); S.moves++;
+    S.hist.push({moved:op,inv,vAfter:clone(S.vOps),oAfter:clone(S.oOps)});
+    S.flashNew=true;
+    if(S.vOps.length===0) S.msg={kind:"win",html:()=>T("win")(S.prob.vr)+(inv.pm?" "+T("pm"):"")};
+    else if(inv.pm) S.msg={kind:"ok",html:()=>T("moved")(label(op),label(inv))+" "+T("pm")};
+    else { const o=op,v=inv; S.msg={kind:"ok",html:()=>T("moved")(label(o),label(v))}; }
+    render();
+  };
+  if(!ghost){
+    const zone=$("dropZone").getBoundingClientRect();
+    ghost=makeGhost(op); ghost.style.left=(zone.left+zone.width/2)+"px"; ghost.style.top=(zone.top+zone.height/2)+"px";
+  }
+  ghost.classList.add("flipA");
+  setTimeout(()=>{ ghost.innerHTML=label(inv); ghost.classList.remove("flipA"); ghost.classList.add("flipB"); },180);
+  setTimeout(()=>{ ghost.remove(); commit(); },520);
+}
+function makeGhost(op){
+  const g=el("div","ghost"); g.innerHTML=label(op);
+  g.style.fontSize=Math.max(28,parseFloat($("board").style.fontSize||"64")*0.7)+"px";
+  document.body.appendChild(g); return g;
+}
+function undo(){
+  if(!S.hist.length) return;
+  S.hist.pop();
+  const h=S.hist[S.hist.length-1];
+  S.vOps = h? clone(h.vAfter) : clone(S.prob.ops);
+  S.oOps = h? clone(h.oAfter) : [];
+  S.sel=null; S.msg=null; $("calc").innerHTML=""; render();
+}
+function hint(){
+  if(!S.vOps.length) return;
+  const i=S.vOps.length-1;
+  const pc=$("board").querySelector(`.piece[data-i="${i}"]`);
+  if(pc){ pc.classList.remove("hint"); void pc.offsetWidth; pc.classList.add("hint"); }
+  const op=S.vOps[i];
+  S.msg={kind:"hint",html:()=>T("hintMsg")(S.prob.vr,label(op))}; renderMsg();
+}
+
+/* ---------- drag & drop (pointer events: mouse + touch + pen) ---------- */
+let drag=null;
+$("board").addEventListener("pointerdown",e=>{
+  const pc=e.target.closest(".piece"); if(!pc) return;
+  e.preventDefault();
+  drag={pc, i:Number(pc.dataset.i), x0:e.clientX, y0:e.clientY, moving:false, ghost:null, id:e.pointerId};
+});
+window.addEventListener("pointermove",e=>{
+  if(!drag || e.pointerId!==drag.id) return;
+  const dx=e.clientX-drag.x0, dy=e.clientY-drag.y0;
+  if(!drag.moving && Math.hypot(dx,dy)>6){
+    drag.moving=true; S.sel=null;
+    drag.pc.classList.add("lift");
+    drag.ghost=makeGhost(S.vOps[drag.i]);
+    $("dropZone").classList.add("target");
+  }
+  if(drag.moving){
+    drag.ghost.style.left=e.clientX+"px"; drag.ghost.style.top=e.clientY+"px";
+    const r=$("dropZone").getBoundingClientRect();
+    const inside=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top-30&&e.clientY<=r.bottom+30;
+    $("dropZone").classList.toggle("hot",inside);
+  }
+});
+window.addEventListener("pointerup",e=>{
+  if(!drag || e.pointerId!==drag.id) return;
+  const d=drag; drag=null;
+  const zone=$("dropZone");
+  if(d.moving){
+    const r=zone.getBoundingClientRect();
+    const inside=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top-30&&e.clientY<=r.bottom+30;
+    zone.classList.remove("hot","target");
+    if(inside) attempt(d.i,d.ghost);
+    else { d.ghost.remove(); d.pc.classList.remove("lift"); }
+  } else {
+    S.sel = (S.sel===d.i) ? null : d.i; render();
+  }
+});
+window.addEventListener("pointercancel",()=>{ if(drag){ if(drag.ghost) drag.ghost.remove(); drag.pc.classList.remove("lift"); $("dropZone").classList.remove("hot","target"); drag=null; } });
+$("board").addEventListener("keydown",e=>{
+  const pc=e.target.closest(".piece"); if(!pc) return;
+  if(e.key==="Enter"||e.key===" "){ e.preventDefault(); attempt(Number(pc.dataset.i),null); }
+});
+
+/* ---------- controls ---------- */
+$("prev").onclick=()=>{ if(S.idx>0){ S.idx--; load(SETS[S.set][S.idx]); } };
+$("next").onclick=()=>{ const s=SETS[S.set]; if(S.idx<s.length-1){ S.idx++; load(s[S.idx]); } };
+$("rand").onclick=()=>{ const lvl={n1:1,n2:2,n3:3}[S.set]||2; S.randomMode=true; load(randomProblem(lvl)); };
+$("undo").onclick=undo; $("reset").onclick=()=>{ S.randomMode? load(S.prob) : load(S.prob); };
+$("hint").onclick=hint;
+$("nextBtn").onclick=()=>{ if(S.randomMode) $("rand").onclick(); else $("next").onclick(); };
+$("calcBtn").onclick=()=>{
+  const ev=evaluate(S.prob.base,S.oOps);
+  const c=$("calc");
+  if(ev===null){ c.textContent=T("noNum"); return; }
+  if(!ev.length){ c.textContent=T("noReal"); return; }
+  c.innerHTML=`${S.prob.vr} = <span class="ans">${ev.map(fmt).join(T("or"))}</span>`;
+};
+window.addEventListener("resize",()=>{ if(S.prob) fit(); });
+
+/* ---------- builder ---------- */
+function renderBuilder(){
+  const chips=$("bChips"); chips.innerHTML="";
+  builderOps.forEach((op,i)=>{
+    const c=el("span","chip"); c.innerHTML=label(op);
+    const x=el("button"); x.textContent="✕"; x.title="Quitar"; x.onclick=()=>{ builderOps.splice(i,1); renderBuilder(); };
+    c.appendChild(x); chips.appendChild(c);
+  });
+  const prev=$("bPrev"); prev.innerHTML="";
+  const vr=($("bVar").value.trim()||"x"), base=($("bBase").value.trim()||"0"), side=$("bSide").value;
+  const n=equationNodes(vr,builderOps,base,[],side,{live:false}); const eq=el("span","tile op"); eq.textContent="=";
+  prev.append(n[0],eq,n[1]);
+}
+$("bAdd").onclick=()=>{
+  const t=$("bOpT").value; let v=$("bOpV").value.trim(); if(!v) return;
+  builderOps.push({t,v}); renderBuilder();
+};
+$("bClear").onclick=()=>{ builderOps=[]; renderBuilder(); };
+["bVar","bBase","bSide"].forEach(id=>$(id).addEventListener("input",renderBuilder));
+$("bPlay").onclick=()=>{
+  if(!builderOps.length){ setMsg("bad",T("bNeed")); return; }
+  const p={vr:$("bVar").value.trim()||"x", base:$("bBase").value.trim()||"0", ops:clone(builderOps), side:$("bSide").value};
+  SETS.own.push(p); S.idx=SETS.own.length-1; S.randomMode=false; load(p);
+};
+
+/* ---------- static text ---------- */
+function applyLang(){
+  document.documentElement.lang=lang;
+  document.querySelectorAll("[data-t]").forEach(n=>{ const v=T(n.dataset.t); if(typeof v==="string") n.innerHTML=v; });
+  document.querySelectorAll(".lang button").forEach(b=>b.classList.toggle("on",b.dataset.lang===lang));
+  const pairs=$("pairs"); pairs.innerHTML="";
+  const pr=[[{t:"add",v:"a"},{t:"sub",v:"a"}],[{t:"mul",v:"a"},{t:"div",v:"a"}],[{t:"pow",v:"n"},{t:"root",v:"n"}]];
+  pr.forEach(([a,b])=>{ const l=el("div"); l.innerHTML=label(a); const m=el("div","arrow"); m.textContent="⇄"; const r=el("div"); r.innerHTML=label(b); pairs.append(l,m,r); });
+  $("rules").innerHTML=T("rules").map(r=>`<li>${r}</li>`).join("");
+  renderTabs(); if(S.prob) render(); renderBuilder();
+}
+document.querySelectorAll(".lang button").forEach(b=>b.onclick=()=>{ lang=b.dataset.lang; try{localStorage.setItem("da-lang",lang);}catch(e){} applyLang(); });
+
+builderOps = parseOps(["*2","+3"]);
+applyLang();
+load(SETS.n1[0]);
+})();
+</script>
+</body>
+</html>
